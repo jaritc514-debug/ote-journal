@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PxD Command Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080808;
+  --bg2: #0f0f0f;
+  --bg3: #161616;
+  --bg4: #1e1e1e;
+  --border: #222;
+  --border2: #2a2a2a;
+  --gold: #c9a84c;
+  --gold2: #e0b86a;
+  --green: #22c55e;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --text: #e8e8e8;
+  --text2: #888;
+  --text3: #444;
+  --radius: 10px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 13px;
+  padding-bottom: 60px;
+}
+
+/* HEADER */
+.header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo { display: flex; align-items: baseline; gap: 10px; }
+.logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: var(--gold); }
+.logo-sub { font-size: 10px; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; }
+.header-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--gold);
+  background: rgba(201,168,76,0.1);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 4px;
+  padding: 4px 10px;
+  letter-spacing: 1px;
+}
+
+/* LAYOUT */
+.container { max-width: 900px; margin: 0 auto; padding: 40px 40px 0; }
+
+/* SECTION */
+.section {
+  margin-bottom: 32px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  animation: fadeIn 0.4s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.section:nth-child(1) { animation-delay: 0.05s; }
+.section:nth-child(2) { animation-delay: 0.1s; }
+.section:nth-child(3) { animation-delay: 0.15s; }
+.section:nth-child(4) { animation-delay: 0.2s; }
+.section:nth-child(5) { animation-delay: 0.25s; }
+.section:nth-child(6) { animation-delay: 0.3s; }
+
+.section-header {
+  padding: 14px 20px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--gold);
+  background: rgba(201,168,76,0.1);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 2px;
+  color: var(--text);
+}
+
+.section-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+/* COMMAND BLOCK */
+.cmd-block { display: flex; flex-direction: column; gap: 8px; }
+
+.cmd-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.cmd-desc {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+  padding-left: 2px;
+}
+
+.cmd-desc strong { color: var(--text); font-weight: 600; }
+
+.code-wrap {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+}
+
+.code-lang {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.copy-btn {
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  color: var(--text2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.5px;
+}
+
+.copy-btn:hover { border-color: var(--gold); color: var(--gold); }
+.copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+pre {
+  padding: 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--gold2);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* DIVIDER */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+/* URLS TABLE */
+.url-table { width: 100%; border-collapse: collapse; }
+.url-table th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 0 0 10px 0;
+}
+.url-table td {
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  vertical-align: middle;
+}
+.url-table td:first-child { color: var(--text); font-weight: 500; width: 160px; }
+.url-table a {
+  color: var(--gold);
+  text-decoration: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+}
+.url-table a:hover { color: var(--gold2); text-decoration: underline; }
+
+/* WORKFLOW */
+.workflow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.workflow-step {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+}
+.workflow-step:last-child { border-bottom: none; }
+
+.step-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  color: var(--gold);
+  opacity: 0.4;
+  line-height: 1;
+  min-width: 28px;
+}
+
+.step-content { flex: 1; }
+.step-title {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text);
+  margin-bottom: 3px;
+  letter-spacing: 0.3px;
+}
+.step-detail {
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+.step-cmd {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--gold);
+  background: rgba(201,168,76,0.08);
+  border: 1px solid rgba(201,168,76,0.15);
+  border-radius: 4px;
+  padding: 2px 8px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+/* RULES */
+.rule-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.rule-item:last-child { border-bottom: none; }
+.rule-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.rule-text { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.rule-text strong { color: var(--text); }
+.rule-hard {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--red);
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 3px;
+  padding: 1px 6px;
+  margin-left: 6px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <span class="logo-text">PxD</span>
+    <span class="logo-sub">Command Reference</span>
+  </div>
+  <div class="header-badge">OTE x PxD SYSTEM</div>
+</div>
+
+<div class="container">
+
+  <!-- STARTUP -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <span class="section-title">Startup Routine</span>
+    </div>
+    <div class="section-body">
+
+      <div class="cmd-block">
+        <div class="cmd-label">Step 1 — Launch TradingView (PowerShell)</div>
+        <div class="code-wrap">
+          <div class="code-header">
+            <span class="code-lang">powershell</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre>$tvPath = (Get-AppxPackage -Name "*TradingView*").InstallLocation
+Start-Process "$tvPath\TradingView.exe" --remote-debugging-port=9222</pre>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="cmd-block">
+        <div class="cmd-label">Step 2 — Verify Connection (PowerShell)</div>
+        <div class="code-wrap">
+          <div class="code-header">
+            <span class="code-lang">powershell</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre>Invoke-WebRequest -Uri 'http://localhost:9222/json' -UseBasicParsing</pre>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="cmd-block">
+        <div class="cmd-label">Step 3 — Launch Claude Code (CMD)</div>
+        <div class="code-wrap">
+          <div class="code-header">
+            <span class="code-lang">cmd</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre>cd %USERPROFILE%\tradingview-mcp && claude</pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DAILY -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <span class="section-title">Daily Commands</span>
+    </div>
+    <div class="section-body">
+
+      <div class="cmd-block">
+        <div class="cmd-label">Quick Prefilter — single pair on chart</div>
+        <div class="cmd-desc">Checks Location + Direction + Action Matrix only. Fast go/no-go on current chart.</div>
+        <div class="code-wrap">
+          <div class="code-header">
+            <span class="code-lang">claude code</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre>run prefilter.txt</pre>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="cmd-block">
+        <div class="cmd-label">Batch Prefilter — all 20 FX pairs</div>
+        <div class="cmd-desc">Scans all pairs, returns ranked table. <strong>Outputs a ready-to-analyze command at the bottom</strong> — copy and paste it when ready.</div>
+        <div class="code-wrap">
+          <div class="code-header">
+            <span class="code-lang">claude code</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre>run batch-prefilter.txt</pre>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="cmd-block">
+        <div class="cmd-label">Full Analysis — single pair</div>
+        <div class="cmd-desc">Full OTE + HTF S&D + macro analysis on current chart. Outputs entry, SL, TP, grade, confluence, invalidation.</div>
+        <div class="code-wrap">
+          <div class="code-header">
+            <span class="code-lang">claude code</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre>run analysis-prompt.txt</pre>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="cmd-block">
+        <div class="cmd-label">Log a Trade — after full analysis</div>
+        <div class="cmd-desc">Generates pre-filled journal entry from analysis output. Copy each field into your journal. <strong>Fill manually:</strong> Position Size, Outcome, Emotions, Review after close.</div>
+        <div class="code-wrap">
+          <div class="code-header">
+            <span class="code-lang">claude code</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre>run log-trade.txt</pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- WEEKLY -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <span class="section-title">Weekly Review</span>
+    </div>
+    <div class="section-body">
+
+      <div class="cmd-block">
+        <div class="cmd-label">Step 1 — Export your trades</div>
+        <div class="cmd-desc">Go to your journal → Trade Log → click <strong>Export JSON</strong> → data copied to clipboard.</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="cmd-block">
+        <div class="cmd-label">Step 2 — Run the review</div>
+        <div class="cmd-desc">Type the command, press Enter, then paste your JSON data and press Enter again.</div>
+        <div class="code-wrap">
+          <div class="code-header">
+            <span class="code-lang">claude code</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre>run weekly-review.txt</pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- URLS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <span class="section-title">Tools & URLs</span>
+    </div>
+    <div class="section-body">
+      <table class="url-table">
+        <thead>
+          <tr>
+            <th>Tool</th>
+            <th>URL</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Trading Journal</td>
+            <td><a href="https://ote-journal.jaritc514.workers.dev" target="_blank">ote-journal.jaritc514.workers.dev</a></td>
+          </tr>
+          <tr>
+            <td>COT Ranker</td>
+            <td><a href="https://ote-journal.jaritc514.workers.dev/cot-ranker.html" target="_blank">ote-journal.jaritc514.workers.dev/cot-ranker.html</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- WORKFLOW -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <span class="section-title">Full Workflow</span>
+    </div>
+    <div class="section-body">
+      <div class="workflow">
+        <div class="workflow-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-title">Startup</div>
+            <div class="step-detail">Launch TradingView → verify connection → launch Claude Code</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-title">Scan</div>
+            <div class="step-detail">Run batch prefilter → review table → copy ready-to-analyze command → paste → run</div>
+            <span class="step-cmd">run batch-prefilter.txt</span>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-title">Analyze</div>
+            <div class="step-detail">Full analysis runs on all valid pairs in sequence → review outputs → pick best setups by grade + R:R + macro</div>
+            <span class="step-cmd">run analysis-prompt.txt</span>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <div class="step-title">Log</div>
+            <div class="step-detail">Generate pre-filled journal entry → paste fields into journal → add position size → save</div>
+            <span class="step-cmd">run log-trade.txt</span>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <div class="step-title">Close</div>
+            <div class="step-detail">After trade closes → add outcome + emotions + post-trade review in journal</div>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">6</div>
+          <div class="step-content">
+            <div class="step-title">Weekly Review</div>
+            <div class="step-detail">Every Friday/Sunday → export JSON → run review → adjust focus for next week</div>
+            <span class="step-cmd">run weekly-review.txt</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RULES -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <span class="section-title">Rules Reminder</span>
+    </div>
+    <div class="section-body">
+      <div>
+        <div class="rule-item">
+          <div class="rule-dot"></div>
+          <div class="rule-text"><strong>Equilibrium = NO TRADE</strong> — Hard filter, no exceptions. If price is in EQ, close the chart and move on.<span class="rule-hard">HARD RULE</span></div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-dot"></div>
+          <div class="rule-text"><strong>Minimum R:R = 1:2</strong> on all trades. Below this, no trade regardless of setup quality.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-dot"></div>
+          <div class="rule-text"><strong>1% risk per trade</strong> — no exceptions.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-dot"></div>
+          <div class="rule-text"><strong>Stop trading</strong> after 2 consecutive losses on the same day OR when FTMO daily drawdown limit is hit — whichever comes first.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-dot"></div>
+          <div class="rule-text"><strong>Pre-trade plan must be written before entry.</strong> If you can't write it clearly in one sentence, don't take the trade.<span class="rule-hard">HARD RULE</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent.trim()).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>
+EOF
