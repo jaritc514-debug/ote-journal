@@ -378,41 +378,12 @@ async function fetchCOT() {
       document.getElementById('cached-note').textContent='cached '+timeAgo(parseInt(cachedTime));
       renderAll(); btn.disabled=false; return;
     }
-    const BASE='https://publicreporting.cftc.gov/resource/6dca-aqww.json';
-    const contractKeys=Object.keys(CONTRACTS);
-    showStatus('loading','Fetching '+contractKeys.length+' contracts from CFTC API...');
-
-    // Sequential fetch with delay to avoid rate limiting
-    const results=[];
-    for(let i=0;i<contractKeys.length;i++){
-      const key=contractKeys[i];
-      showStatus('loading','Fetching '+key+' ('+( i+1)+'/'+contractKeys.length+')...');
-      try{
-        const url=BASE+'?$where=cftc_contract_market_code=%27'+CONTRACTS[key].code+'%27&$order=report_date_as_yyyy_mm_dd%20DESC&$limit=2';
-        const res=await fetch(url);
-        if(!res.ok) throw new Error(res.status);
-        const data=await res.json();
-        results.push({key,data});
-      }catch(e){
-        console.error('Failed for '+key+':',e.message, e);
-        results.push({key,data:[]});
-      }
-      // Small delay between requests to be a good API citizen
-      if(i<contractKeys.length-1) await new Promise(r=>setTimeout(r,120));
-    }
-    const raw={}; let reportDate='';
-    for(const {key,data} of results){
-      if(!data||data.length===0) continue;
-      const r=data[0];
-      const ncLongChg=parseFloat(r.change_in_noncomm_long_all)||0;
-      const ncShortChg=parseFloat(r.change_in_noncomm_short_all)||0;
-      const ncDelta=ncLongChg-ncShortChg;
-      const oiDelta=parseFloat(r.change_in_open_interest_all)||0;
-      if(!reportDate&&r.report_date_as_yyyy_mm_dd) reportDate=r.report_date_as_yyyy_mm_dd.split('T')[0];
-      raw[key]={ncDelta,oiDelta};
-    }
-    if(!Object.keys(raw).length) throw new Error('No data returned');
-    processAndRender(raw, reportDate);
+    showStatus('loading','Loading latest COT data...');
+    const res=await fetch('data/cot-data.json?_='+Date.now());
+    if(!res.ok) throw new Error('Could not load cot-data.json');
+    const json=await res.json();
+    if(!json.raw||!Object.keys(json.raw).length) throw new Error('No data in file');
+    processAndRender(json.raw, json.reportDate);
     localStorage.setItem('cot_fetch_time_v2',Date.now().toString());
   } catch(err) {
     console.error('Full fetch error:', err);

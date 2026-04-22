@@ -1,0 +1,23 @@
+name: Fetch COT Data
+
+on:
+  schedule:
+    - cron: '0 21 * * 5'  # Every Friday at 9PM UTC (4PM EST)
+  workflow_dispatch:        # Allow manual trigger
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch CFTC data
+        run: python scripts/fetch_cot.py
+
+      - name: Commit data
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add data/cot-data.json
+          git diff --staged --quiet || git commit -m "Update COT data $(date +%Y-%m-%d)"
+          git push
