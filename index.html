@@ -64,6 +64,13 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 /* 50% split zone colors */
 .pill-input[value="Premium above 50%"]:checked+.pill-label{background:var(--red-dim);border-color:var(--red);color:var(--red);}
 .pill-input[value="Discount below 50%"]:checked+.pill-label{background:var(--green-dim);border-color:var(--green);color:var(--green);}
+.pill-input[value="Above 50% (sells)"]:checked+.pill-label{background:var(--red-dim);border-color:var(--red);color:var(--red);}
+.pill-input[value="Below 50% (buys)"]:checked+.pill-label{background:var(--green-dim);border-color:var(--green);color:var(--green);}
+.pill-input[value="Failed filter"]:checked+.pill-label{background:var(--amber-dim);border-color:var(--amber);color:var(--amber);}
+.pill-input[value="Large"]:checked+.pill-label{background:var(--blue-dim);border-color:var(--blue);color:var(--blue);}
+.pill-input[value="Medium"]:checked+.pill-label{background:var(--blue-dim);border-color:var(--blue);color:var(--blue);}
+.pill-input[value="Small"]:checked+.pill-label{background:var(--blue-dim);border-color:var(--blue);color:var(--blue);}
+.pill-input[value="Microscopic"]:checked+.pill-label{background:var(--blue-dim);border-color:var(--blue);color:var(--blue);}
 /* Precision zone colors */
 .pill-input[value="Deep Premium above 0.66"]:checked+.pill-label{background:var(--red-dim);border-color:var(--red);color:var(--red);}
 .pill-input[value="Equilibrium 0.33-0.66"]:checked+.pill-label{background:var(--amber-dim);border-color:var(--amber);color:var(--amber);}
@@ -355,7 +362,7 @@ tr:hover td{background:var(--bg3);}
       <div class="chk-item"><span class="chk-name">Liquidity Sweep</span><span class="chk-desc">Prior swing swept before leg</span><div class="pills"><input type="radio" name="chk-liq" class="pill-input" id="ch-liq-y" value="Yes" onchange="calcScore()"><label class="pill-label" for="ch-liq-y">Yes</label><input type="radio" name="chk-liq" class="pill-input" id="ch-liq-n" value="No" onchange="calcScore()"><label class="pill-label" for="ch-liq-n">No</label></div></div>
       <div class="chk-item"><span class="chk-name">BOS and Imbalance</span><span class="chk-desc">Clear structural break with FVG</span><div class="pills"><input type="radio" name="chk-bos" class="pill-input" id="ch-bos-y" value="Yes" onchange="calcScore()"><label class="pill-label" for="ch-bos-y">Yes</label><input type="radio" name="chk-bos" class="pill-input" id="ch-bos-n" value="No" onchange="calcScore()"><label class="pill-label" for="ch-bos-n">No</label></div></div>
       <div class="chk-item"><span class="chk-name">70.5 Retracement</span><span class="chk-desc">Price reached entry zone</span><div class="pills"><input type="radio" name="chk-705" class="pill-input" id="ch-705-y" value="Yes" onchange="calcScore()"><label class="pill-label" for="ch-705-y">Yes</label><input type="radio" name="chk-705" class="pill-input" id="ch-705-n" value="No" onchange="calcScore()"><label class="pill-label" for="ch-705-n">No</label></div></div>
-      <div class="chk-item"><span class="chk-name">Liq Grab + FVG</span><span class="chk-desc">15m sweep with big displacement candle(s)</span><div class="pills"><input type="radio" name="chk-liqgrab" class="pill-input" id="ch-lg-y" value="Yes" onchange="calcScore()"><label class="pill-label" for="ch-lg-y">Yes</label><input type="radio" name="chk-liqgrab" class="pill-input" id="ch-lg-n" value="No" onchange="calcScore()"><label class="pill-label" for="ch-lg-n">No</label><input type="radio" name="chk-liqgrab" class="pill-input" id="ch-lg-na" value="N/A" onchange="calcScore()"><label class="pill-label" for="ch-lg-na">N/A</label></div></div>
+      
       <div class="score-box" id="score-box"><span class="score-num" id="score-num">--</span><span class="score-lbl">Score</span></div>
     </div>
   </div>
