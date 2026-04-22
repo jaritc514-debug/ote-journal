@@ -398,7 +398,7 @@ tr:hover td{background:var(--bg3);}
 <!-- TRADE LOG -->
 <div id="page-log" class="page">
   <div class="section">
-    <div class="log-header"><div class="log-title">Trade Log</div><div class="view-toggle"><button class="toggle-btn active" id="toggle-table" onclick="setLogView('table')" title="Table">&#9776;</button><button class="toggle-btn" id="toggle-cards" onclick="setLogView('cards')" title="Cards">&#8862;</button></div></div>
+    <div class="log-header"><div class="log-title">Trade Log</div><div style="display:flex;align-items:center;gap:10px;"><button onclick="exportJSON()" style="background:var(--gold);color:#000;border:none;padding:7px 16px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.5px;">⬇ Export JSON</button><div class="view-toggle"><button class="toggle-btn active" id="toggle-table" onclick="setLogView('table')" title="Table">&#9776;</button><button class="toggle-btn" id="toggle-cards" onclick="setLogView('cards')" title="Cards">&#8862;</button></div></div></div>
     <div id="log-table-wrap" class="table-wrap"><table><thead><tr><th>Entry Date</th><th>Close Date</th><th>Pair</th><th>Exec TF</th><th>Direction</th><th>Grade</th><th>P&L</th><th>Accounts</th><th>Actions</th></tr></thead><tbody id="log-body"></tbody></table><div id="log-empty" class="empty"><div class="empty-icon">&#128203;</div><div>No trades logged yet.</div></div></div>
     <div id="log-cards-wrap" style="display:none"><div class="cards-grid" id="cards-body"></div><div id="cards-empty" class="empty" style="display:none"><div class="empty-icon">&#128203;</div><div>No trades logged yet.</div></div></div>
   </div>
@@ -873,6 +873,18 @@ function renderAnalysis(){
 renderAccCheckboxes();
 renderAccounts();
 initDB();
+
+async function exportJSON(){
+  if(!trades.length){alert('No trades to export.');return;}
+  const json=JSON.stringify(trades,null,2);
+  try{
+    await navigator.clipboard.writeText(json);
+    alert('✓ '+trades.length+' trades copied to clipboard. Paste into Claude for your weekly review.');
+  }catch(e){
+    const w=window.open();
+    w.document.write('<pre style="background:#111;color:#eee;padding:20px;font-size:12px;">'+json+'</pre>');
+  }
+}
 </script>
 </body>
 </html>
