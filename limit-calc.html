@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Trading Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f11;
+    --surface: #141618;
+    --surface2: #1a1d20;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8e6e0;
+    --muted: #6b6a66;
+    --dim: #3a3935;
+    --green: #4ade80;
+    --green-bg: rgba(74,222,128,0.08);
+    --green-border: rgba(74,222,128,0.2);
+    --red: #f87171;
+    --red-bg: rgba(248,113,113,0.08);
+    --red-border: rgba(248,113,113,0.2);
+    --amber: #fbbf24;
+    --amber-bg: rgba(251,191,36,0.08);
+    --amber-border: rgba(251,191,36,0.2);
+    --accent: #c8b89a;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── TABS ── */
+  .tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    padding: 0 20px;
+  }
+  .tab-btn {
+    padding: 16px 20px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.15s;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-panel { display: none; padding: 32px 20px 80px; max-width: 680px; margin: 0 auto; }
+  .tab-panel.active { display: block; }
+
+  /* ── SHARED ── */
+  .section-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+  }
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+  .field input, .field select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 9px 11px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+  .field input::-webkit-outer-spin-button,
+  .field input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .field input:focus, .field select:focus { border-color: var(--border2); }
+  .field select { font-family: var(--sans); cursor: pointer; }
+  .field select option { background: #1a1d20; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  /* ── DIRECTION BUTTONS ── */
+  .dir-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .dir-btn {
+    padding: 10px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .dir-btn:hover { border-color: var(--border2); color: var(--text); }
+  .dir-btn.buy { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+  .dir-btn.sell { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+
+  /* ── FILL RULE ── */
+  .fill-rule {
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    padding: 13px 15px;
+    margin-bottom: 12px;
+    line-height: 1.6;
+  }
+  .fill-rule.buy { background: var(--green-bg); border-color: var(--green-border); }
+  .fill-rule.sell { background: var(--red-bg); border-color: var(--red-border); }
+  .fill-rule .ft { font-size: 12px; font-weight: 500; margin-bottom: 4px; }
+  .fill-rule.buy .ft { color: var(--green); }
+  .fill-rule.sell .ft { color: var(--red); }
+  .fill-rule p { font-size: 13px; color: var(--text); opacity: 0.8; }
+
+  /* ── WARN ── */
+  .warn {
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    border-radius: 8px;
+    padding: 11px 15px;
+    font-size: 13px;
+    color: var(--amber);
+    margin-bottom: 12px;
+    display: none;
+    line-height: 1.5;
+  }
+
+  /* ── OUTPUT CARDS ── */
+  .outputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .out-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .out-card .ol { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .out-card .ov {
+    font-family: var(--mono);
+    font-size: 19px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+    min-height: 28px;
+    word-break: break-all;
+  }
+  .out-card.entry-card .ov { color: var(--accent); }
+  .out-card.sl-card .ov { color: var(--red); }
+  .out-card.tp-card .ov { color: var(--green); }
+
+  .copy-btn {
+    font-size: 11px;
+    font-family: var(--sans);
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .copy-btn:hover { border-color: var(--border2); color: var(--text); }
+  .copy-btn.copied { border-color: var(--green-border); color: var(--green); }
+
+  /* ── METRICS ── */
+  .metrics { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-bottom: 12px; }
+  .metric {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .metric .ml { font-size: 10px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 5px; }
+  .metric .mv { font-family: var(--mono); font-size: 16px; font-weight: 500; color: var(--text); }
+  .metric .ms { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+  /* ── LOGIC BOX ── */
+  .logic {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 13px 15px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.9;
+    font-family: var(--mono);
+  }
+  .logic span { display: block; }
+  .logic span::before { content: '› '; color: var(--dim); }
+
+  /* ── SESSIONS ── */
+  .sess-time-block { margin-bottom: 20px; }
+  .sess-time-big { font-family: var(--mono); font-size: 36px; font-weight: 500; color: var(--text); line-height: 1; margin-bottom: 4px; }
+  .sess-time-sub { font-size: 11px; color: var(--muted); }
+  .tz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+  .tz-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 13px; }
+  .tz-card .tl { font-size: 10px; color: var(--muted); margin-bottom: 4px; letter-spacing: 0.04em; }
+  .tz-card .tv { font-family: var(--mono); font-size: 16px; font-weight: 500; color: var(--text); }
+  .sess-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .sess-row { border-radius: 8px; border: 1px solid var(--border); padding: 13px 15px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s; }
+  .sess-row.live { border-color: var(--green-border); background: var(--green-bg); }
+  .sess-row.soon { border-color: var(--amber-border); background: var(--amber-bg); }
+  .sess-row.dead { opacity: 0.4; }
+  .sess-row .sn { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+  .sess-row.live .sn { color: var(--green); }
+  .sess-row.soon .sn { color: var(--amber); }
+  .sess-row .st { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .sess-tag { font-size: 10px; padding: 3px 9px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+  .tag-live { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+  .tag-soon { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
+  .tag-closed { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .liq-wrap { margin-bottom: 20px; }
+  .liq-track { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+  .liq-fill { height: 100%; border-radius: 3px; background: var(--green); transition: width 1s ease; }
+  .liq-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+  .status-card { border-radius: 8px; padding: 14px 16px; border: 1px solid var(--border); background: var(--surface); }
+  .status-card.sc-green { border-color: var(--green-border); background: var(--green-bg); }
+  .status-card.sc-amber { border-color: var(--amber-border); background: var(--amber-bg); }
+  .status-card.sc-red { border-color: var(--red-border); background: var(--red-bg); }
+  .status-card .sc-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+  .sc-green .sc-title { color: var(--green); }
+  .sc-amber .sc-title { color: var(--amber); }
+  .sc-red .sc-title { color: var(--red); }
+  .status-card .sc-desc { font-size: 12px; color: var(--text); opacity: 0.75; line-height: 1.6; }
+
+  /* ── POSITION SIZE OUTPUTS ── */
+  .ps-outputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .ps-out {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    text-align: center;
+  }
+  .ps-out .pol { font-size: 11px; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.04em; }
+  .ps-out .pov { font-family: var(--mono); font-size: 32px; font-weight: 500; line-height: 1; }
+  .ps-out .pos { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .ps-out.lot-card .pov { color: var(--accent); }
+  .ps-out.risk-card .pov { color: var(--amber); }
+
+  .risk-warn {
+    background: var(--red-bg);
+    border: 1px solid var(--red-border);
+    border-radius: 8px;
+    padding: 11px 15px;
+    font-size: 13px;
+    color: var(--red);
+    margin-bottom: 12px;
+    display: none;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 520px) {
+    .g2, .g3, .outputs, .metrics, .ps-outputs { grid-template-columns: 1fr 1fr; }
+    .g3 .field:last-child, .outputs .out-card:last-child, .metrics .metric:last-child { grid-column: span 2; }
+    .tab-btn { padding: 14px 14px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('entry')">Limit Entry</button>
+  <button class="tab-btn" onclick="switchTab('size')">Position Size</button>
+  <button class="tab-btn" onclick="switchTab('sessions')">Sessions</button>
+</div>
+
+<!-- ════════════════════════════════════════
+     TAB 1 — LIMIT ENTRY CALCULATOR
+════════════════════════════════════════ -->
+<div class="tab-panel active" id="tab-entry">
+
+  <p class="section-label" style="margin-bottom:10px;">Instrument &amp; Direction</p>
+  <div class="card">
+    <div class="dir-row">
+      <button class="dir-btn buy" id="bb" onclick="setDir('buy')">Buy limit</button>
+      <button class="dir-btn" id="bs" onclick="setDir('sell')">Sell limit</button>
+    </div>
+    <div class="field">
+      <label>Instrument type</label>
+      <select id="inst" onchange="calcEntry()">
+        <option value="forex">Forex — majors / crosses</option>
+        <option value="gold">Gold — XAUUSD</option>
+        <option value="indices">Indices — NAS100, etc.</option>
+      </select>
+    </div>
+  </div>
+
+  <p class="section-label">MT5 live feed + TV reference</p>
+  <div class="card">
+    <div class="g3">
+      <div class="field"><label>MT5 Bid</label><input type="number" id="bid" placeholder="1.08460" step="any" oninput="calcEntry()"/></div>
+      <div class="field"><label>MT5 Ask</label><input type="number" id="ask" placeholder="1.08463" step="any" oninput="calcEntry()"/></div>
+      <div class="field"><label>TV reference price</label><input type="number" id="tv" placeholder="1.08450" step="any" oninput="calcEntry()"/></div>
+    </div>
+  </div>
+
+  <p class="section-label">Your TV zone prices</p>
+  <div class="card">
+    <div class="g3">
+      <div class="field"><label>Entry (TV)</label><input type="number" id="entry" placeholder="1.08200" step="any" oninput="calcEntry()"/></div>
+      <div class="field"><label>Stop loss (TV)</label><input type="number" id="sl" placeholder="1.07900" step="any" oninput="calcEntry()"/></div>
+      <div class="field"><label>Take profit (TV)</label><input type="number" id="tp" placeholder="1.08700" step="any" oninput="calcEntry()"/></div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <div class="fill-rule buy" id="fill-box">
+    <p class="ft" id="fill-title">Buy limit — fills on Ask</p>
+    <p id="fill-text">MT5 triggers your buy limit when Ask drops to your level. TV shows mid/bid. Entry is adjusted down by the spread so you fill at the right zone price. SL and TP shift by feed delta only — no spread adjustment on those.</p>
+  </div>
+
+  <div class="warn" id="warn"><strong>Large feed delta detected.</strong> <span id="warn-txt"></span></div>
+
+  <p class="section-label">Enter these prices in MT5</p>
+  <div class="outputs">
+    <div class="out-card entry-card">
+      <p class="ol">Entry</p>
+      <p class="ov" id="out-entry">—</p>
+      <button class="copy-btn" onclick="cp('out-entry', this)">Copy</button>
+    </div>
+    <div class="out-card sl-card">
+      <p class="ol">Stop loss</p>
+      <p class="ov" id="out-sl">—</p>
+      <button class="copy-btn" onclick="cp('out-sl', this)">Copy</button>
+    </div>
+    <div class="out-card tp-card">
+      <p class="ol">Take profit</p>
+      <p class="ov" id="out-tp">—</p>
+      <button class="copy-btn" onclick="cp('out-tp', this)">Copy</button>
+    </div>
+  </div>
+
+  <p class="section-label">Spread &amp; delta</p>
+  <div class="metrics">
+    <div class="metric">
+      <p class="ml">Spread</p>
+      <p class="mv" id="m-spread">—</p>
+      <p class="ms" id="m-spread-lbl">pips</p>
+    </div>
+    <div class="metric">
+      <p class="ml">TV → MT5 delta</p>
+      <p class="mv" id="m-delta">—</p>
+      <p class="ms" id="m-delta-lbl">pips</p>
+    </div>
+    <div class="metric">
+      <p class="ml">Entry adjustment</p>
+      <p class="mv" id="m-adj">—</p>
+      <p class="ms" id="m-adj-lbl">pips from TV entry</p>
+    </div>
+  </div>
+
+  <div class="logic" id="logic"><span style="opacity:0.4; list-style:none;">Enter prices above to see calculation breakdown</span></div>
+</div>
+
+
+<!-- ════════════════════════════════════════
+     TAB 2 — POSITION SIZE CALCULATOR
+════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-size">
+
+  <p class="section-label">Account</p>
+  <div class="card">
+    <div class="g2">
+      <div class="field"><label>Account balance (USD)</label><input type="number" id="balance" placeholder="100000" step="any" oninput="calcSize()"/></div>
+      <div class="field"><label>Risk %</label><input type="number" id="risk-pct" placeholder="1" step="any" oninput="calcSize()"/></div>
+    </div>
+  </div>
+
+  <p class="section-label">Trade</p>
+  <div class="card">
+    <div class="field" style="margin-bottom:12px;">
+      <label>Instrument type</label>
+      <select id="ps-inst" onchange="calcSize()">
+        <option value="forex">Forex — majors / crosses</option>
+        <option value="forex-jpy">Forex — JPY pairs (e.g. USDJPY)</option>
+        <option value="gold">Gold — XAUUSD</option>
+        <option value="indices">Indices — NAS100, etc.</option>
+      </select>
+    </div>
+    <div class="g2">
+      <div class="field"><label>Entry price (MT5 adjusted)</label><input type="number" id="ps-entry" placeholder="1.08200" step="any" oninput="calcSize()"/></div>
+      <div class="field"><label>Stop loss price (MT5 adjusted)</label><input type="number" id="ps-sl" placeholder="1.07900" step="any" oninput="calcSize()"/></div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <div class="risk-warn" id="risk-warn"><strong>Risk too high.</strong> <span id="risk-warn-txt"></span></div>
+
+  <p class="section-label">Results</p>
+  <div class="ps-outputs">
+    <div class="ps-out lot-card">
+      <p class="pol">Lot size</p>
+      <p class="pov" id="ps-lots">—</p>
+      <p class="pos">standard lots</p>
+    </div>
+    <div class="ps-out risk-card">
+      <p class="pol">Dollar risk</p>
+      <p class="pov" id="ps-dollar">—</p>
+      <p class="pos">USD at risk</p>
+    </div>
+  </div>
+
+  <p class="section-label">Breakdown</p>
+  <div class="metrics" style="grid-template-columns: repeat(3, minmax(0,1fr));">
+    <div class="metric">
+      <p class="ml">SL distance</p>
+      <p class="mv" id="ps-sl-pips">—</p>
+      <p class="ms" id="ps-sl-lbl">pips</p>
+    </div>
+    <div class="metric">
+      <p class="ml">Pip value</p>
+      <p class="mv" id="ps-pipval">—</p>
+      <p class="ms">USD per pip / lot</p>
+    </div>
+    <div class="metric">
+      <p class="ml">Risk amount</p>
+      <p class="mv" id="ps-riskamt">—</p>
+      <p class="ms">USD</p>
+    </div>
+  </div>
+
+  <div class="logic" id="ps-logic"><span style="opacity:0.4;">Enter account and trade details above</span></div>
+</div>
+
+<!-- ════════════════════════════════════════
+     TAB 3 — SESSIONS
+════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-sessions">
+
+  <p class="section-label">Your time</p>
+  <div class="card sess-time-block" style="margin-bottom:12px;">
+    <p class="sess-time-big" id="local-time">--:--:--</p>
+    <p class="sess-time-sub" id="local-label">Montreal — ET</p>
+  </div>
+
+  <p class="section-label">Market clocks</p>
+  <div class="tz-grid" style="margin-bottom:12px;">
+    <div class="tz-card"><p class="tl">London (GMT/BST)</p><p class="tv" id="tz-london">--:--</p></div>
+    <div class="tz-card"><p class="tl">New York (ET)</p><p class="tv" id="tz-ny">--:--</p></div>
+    <div class="tz-card"><p class="tl">Tokyo (JST)</p><p class="tv" id="tz-tokyo">--:--</p></div>
+    <div class="tz-card"><p class="tl">Sydney (AEST)</p><p class="tv" id="tz-sydney">--:--</p></div>
+  </div>
+
+  <p class="section-label">Session status</p>
+  <div class="sess-list" id="sess-list"></div>
+
+  <p class="section-label">Liquidity</p>
+  <div class="liq-wrap">
+    <div class="liq-track"><div class="liq-fill" id="liq-fill" style="width:0%"></div></div>
+    <div class="liq-labels"><span>Low</span><span>High</span></div>
+  </div>
+
+  <div class="status-card" id="status-card">
+    <p class="sc-title" id="sc-title">Calculating...</p>
+    <p class="sc-desc" id="sc-desc"></p>
+  </div>
+
+</div>
+
+<script>
+/* ─── TAB SWITCHING ─── */
+function switchTab(t) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+/* ─── ENTRY CALC HELPERS ─── */
+let dir = 'buy';
+function setDir(d) {
+  dir = d;
+  document.getElementById('bb').className = 'dir-btn' + (d==='buy' ? ' buy' : '');
+  document.getElementById('bs').className = 'dir-btn' + (d==='sell' ? ' sell' : '');
+  calcEntry();
+}
+function pip() {
+  const i = document.getElementById('inst').value;
+  return i==='gold' ? 0.01 : i==='indices' ? 1 : 0.0001;
+}
+function dec() {
+  const i = document.getElementById('inst').value;
+  return i==='gold' ? 2 : i==='indices' ? 1 : 5;
+}
+function pipLbl() {
+  const i = document.getElementById('inst').value;
+  return i==='indices' || i==='gold' ? 'pts' : 'pips';
+}
+
+/* ─── ENTRY CALCULATOR ─── */
+function calcEntry() {
+  const bid = parseFloat(document.getElementById('bid').value);
+  const ask = parseFloat(document.getElementById('ask').value);
+  const tv  = parseFloat(document.getElementById('tv').value);
+  const ent = parseFloat(document.getElementById('entry').value);
+  const sl  = parseFloat(document.getElementById('sl').value);
+  const tp  = parseFloat(document.getElementById('tp').value);
+  const p = pip(), d = dec(), pl = pipLbl();
+
+  const fb = document.getElementById('fill-box');
+  const ft = document.getElementById('fill-title');
+  const ftxt = document.getElementById('fill-text');
+  if (dir === 'buy') {
+    fb.className = 'fill-rule buy';
+    ft.textContent = 'Buy limit — fills on Ask';
+    ftxt.textContent = 'MT5 triggers your buy limit when Ask drops to your level. TV shows mid/bid. Entry is adjusted down by the spread so you fill at the right zone price. SL and TP shift by feed delta only — no spread adjustment on those.';
+  } else {
+    fb.className = 'fill-rule sell';
+    ft.textContent = 'Sell limit — fills on Bid';
+    ftxt.textContent = 'MT5 triggers your sell limit when Bid rises to your level. No spread deduction on entry for sell limits — just the feed delta. SL and TP also shift by delta only.';
+  }
+
+  if (isNaN(bid) || isNaN(ask)) {
+    ['out-entry','out-sl','out-tp'].forEach(id => document.getElementById(id).textContent = '—');
+    ['m-spread','m-delta','m-adj'].forEach(id => document.getElementById(id).textContent = '—');
+    document.getElementById('logic').innerHTML = '<span style="opacity:0.4;">Enter prices above to see calculation breakdown</span>';
+    document.getElementById('warn').style.display = 'none';
+    return;
+  }
+
+  const spread = ask - bid;
+  const spreadPips = spread / p;
+  let delta = 0, deltaKnown = false;
+  if (!isNaN(tv)) { delta = bid - tv; deltaKnown = true; }
+  const deltaPips = delta / p;
+
+  let outEntry = '—', outSL = '—', outTP = '—', adjPips = 0;
+  if (!isNaN(ent)) {
+    if (dir === 'buy') {
+      outEntry = (ent + delta - spread).toFixed(d);
+      adjPips = (delta - spread) / p;
+    } else {
+      outEntry = (ent + delta).toFixed(d);
+      adjPips = delta / p;
+    }
+  }
+  if (!isNaN(sl)) outSL = (sl + delta).toFixed(d);
+  if (!isNaN(tp)) outTP = (tp + delta).toFixed(d);
+
+  document.getElementById('out-entry').textContent = outEntry;
+  document.getElementById('out-sl').textContent = outSL;
+  document.getElementById('out-tp').textContent = outTP;
+  document.getElementById('m-spread').textContent = spreadPips.toFixed(1);
+  document.getElementById('m-spread-lbl').textContent = pl;
+  document.getElementById('m-delta').textContent = deltaKnown ? (deltaPips>=0?'+':'')+deltaPips.toFixed(1) : '—';
+  document.getElementById('m-delta-lbl').textContent = pl;
+  document.getElementById('m-adj').textContent = isNaN(ent) ? '—' : (adjPips>=0?'+':'')+adjPips.toFixed(1);
+  document.getElementById('m-adj-lbl').textContent = pl + ' from TV entry';
+
+  const warn = document.getElementById('warn');
+  if (deltaKnown && Math.abs(deltaPips) > 3) {
+    warn.style.display = 'block';
+    document.getElementById('warn-txt').textContent = ` TV is ${Math.abs(deltaPips.toFixed(1))} ${pl} ${delta > 0 ? 'below' : 'above'} MT5 bid. Confirm both prices.`;
+  } else { warn.style.display = 'none'; }
+
+  const lines = [];
+  if (deltaKnown) lines.push(`Feed delta (MT5 bid − TV ref): ${deltaPips>=0?'+':''}${deltaPips.toFixed(1)} ${pl}`);
+  lines.push(`Spread (ask − bid): ${spreadPips.toFixed(1)} ${pl}`);
+  if (dir === 'buy') {
+    lines.push(`Entry = TV entry + delta − spread → ${adjPips>=0?'+':''}${adjPips.toFixed(1)} ${pl} adjustment`);
+    lines.push(`SL / TP = TV level + delta only (exits fill on bid)`);
+  } else {
+    lines.push(`Entry = TV entry + delta (no spread deduction for sell limits)`);
+    lines.push(`SL / TP = TV level + delta only (exits fill on ask)`);
+  }
+  document.getElementById('logic').innerHTML = lines.map(l => `<span>${l}</span>`).join('');
+}
+
+/* ─── POSITION SIZE CALCULATOR ─── */
+function calcSize() {
+  const balance  = parseFloat(document.getElementById('balance').value);
+  const riskPct  = parseFloat(document.getElementById('risk-pct').value);
+  const inst     = document.getElementById('ps-inst').value;
+  const entryVal = parseFloat(document.getElementById('ps-entry').value);
+  const slVal    = parseFloat(document.getElementById('ps-sl').value);
+
+  const riskWarn = document.getElementById('risk-warn');
+  const lotsEl   = document.getElementById('ps-lots');
+  const dollarEl = document.getElementById('ps-dollar');
+  const slPipsEl = document.getElementById('ps-sl-pips');
+  const pipValEl = document.getElementById('ps-pipval');
+  const riskAmtEl= document.getElementById('ps-riskamt');
+  const logicEl  = document.getElementById('ps-logic');
+  const slLblEl  = document.getElementById('ps-sl-lbl');
+
+  if (isNaN(balance) || isNaN(riskPct) || isNaN(entryVal) || isNaN(slVal)) {
+    [lotsEl, dollarEl, slPipsEl, pipValEl, riskAmtEl].forEach(el => el.textContent = '—');
+    logicEl.innerHTML = '<span style="opacity:0.4;">Enter account and trade details above</span>';
+    riskWarn.style.display = 'none';
+    return;
+  }
+
+  // Risk amount in USD
+  const riskAmt = balance * (riskPct / 100);
+
+  // SL distance and pip sizes per instrument
+  let pipSize, pipValuePerLot, slDistance, slPips, pipLblStr;
+
+  if (inst === 'forex') {
+    pipSize = 0.0001;
+    pipLblStr = 'pips';
+    slDistance = Math.abs(entryVal - slVal);
+    slPips = slDistance / pipSize;
+    // Standard lot = 100,000 units; pip value for non-JPY pairs ≈ $10/pip/lot
+    pipValuePerLot = 10;
+  } else if (inst === 'forex-jpy') {
+    pipSize = 0.01;
+    pipLblStr = 'pips';
+    slDistance = Math.abs(entryVal - slVal);
+    slPips = slDistance / pipSize;
+    // JPY pairs: pip value ≈ $1000/entry price per standard lot — approximate for USDJPY
+    pipValuePerLot = (1000 / entryVal);
+  } else if (inst === 'gold') {
+    pipSize = 0.01;
+    pipLblStr = 'pts';
+    slDistance = Math.abs(entryVal - slVal);
+    slPips = slDistance / pipSize;
+    // Gold: 1 lot = 100 oz; $1 move = $100; $0.01 move = $1 → pip value = $1/pip/lot
+    pipValuePerLot = 1;
+  } else {
+    // Indices
+    pipSize = 1;
+    pipLblStr = 'pts';
+    slDistance = Math.abs(entryVal - slVal);
+    slPips = slDistance;
+    // NAS100 1 lot = $1/pt (FTMO); adjust if your broker differs
+    pipValuePerLot = 1;
+  }
+
+  if (slPips === 0) {
+    logicEl.innerHTML = '<span style="opacity:0.4;">Entry and SL cannot be the same price</span>';
+    return;
+  }
+
+  const lots = riskAmt / (slPips * pipValuePerLot);
+  const dollarRisk = lots * slPips * pipValuePerLot;
+
+  lotsEl.textContent   = lots.toFixed(2);
+  dollarEl.textContent = '$' + dollarRisk.toFixed(2);
+  slPipsEl.textContent = slPips.toFixed(1);
+  slLblEl.textContent  = pipLblStr;
+  pipValEl.textContent = '$' + pipValuePerLot.toFixed(2);
+  riskAmtEl.textContent= '$' + riskAmt.toFixed(2);
+
+  // Warn if risk % is unusually high
+  if (riskPct > 2) {
+    riskWarn.style.display = 'block';
+    document.getElementById('risk-warn-txt').textContent = ` ${riskPct}% risk is above the standard 1-2% rule. FTMO limits drawdown — confirm this fits your plan.`;
+  } else { riskWarn.style.display = 'none'; }
+
+  const lines = [
+    `Risk amount: ${riskPct}% of $${balance.toLocaleString()} = $${riskAmt.toFixed(2)}`,
+    `SL distance: |${entryVal} − ${slVal}| = ${slDistance.toFixed(inst==='indices'?1:5)} = ${slPips.toFixed(1)} ${pipLblStr}`,
+    `Pip value: $${pipValuePerLot.toFixed(2)} / ${pipLblStr} / lot`,
+    `Lot size: $${riskAmt.toFixed(2)} ÷ (${slPips.toFixed(1)} × $${pipValuePerLot.toFixed(2)}) = ${lots.toFixed(2)} lots`,
+  ];
+  logicEl.innerHTML = lines.map(l => `<span>${l}</span>`).join('');
+}
+
+/* ─── SESSIONS CLOCK ─── */
+function pad(n) { return String(n).padStart(2,'0'); }
+
+function fmtTime(date, tz) {
+  return date.toLocaleTimeString('en-CA', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+function fmtTimeFull(date, tz) {
+  return date.toLocaleTimeString('en-CA', { timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+}
+
+function minutesIntoDay(date, tz) {
+  const parts = date.toLocaleString('en-CA', { timeZone: tz, hour: 'numeric', minute: 'numeric', hour12: false }).split(':');
+  return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+}
+
+function minsUntil(current, target) {
+  let diff = target - current;
+  if (diff < 0) diff += 1440;
+  return diff;
+}
+
+function fmtCountdown(mins) {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+const SESSIONS = [
+  { name: 'Sydney / Asia', tz: 'Australia/Sydney', openET: 18*60, closeET: 3*60, label: '18:00 – 03:00 ET' },
+  { name: 'Tokyo', tz: 'Asia/Tokyo', openET: 19*60, closeET: 4*60, label: '19:00 – 04:00 ET' },
+  { name: 'London', tz: 'Europe/London', openET: 3*60, closeET: 12*60, label: '03:00 – 12:00 ET' },
+  { name: 'New York', tz: 'America/New_York', openET: 8*60, closeET: 17*60, label: '08:00 – 17:00 ET' },
+];
+
+function isOpen(etMin, openET, closeET) {
+  if (openET < closeET) return etMin >= openET && etMin < closeET;
+  return etMin >= openET || etMin < closeET;
+}
+
+function updateSessions() {
+  const now = new Date();
+  document.getElementById('local-time').textContent = fmtTimeFull(now, 'America/Toronto');
+  document.getElementById('tz-london').textContent = fmtTime(now, 'Europe/London');
+  document.getElementById('tz-ny').textContent = fmtTime(now, 'America/New_York');
+  document.getElementById('tz-tokyo').textContent = fmtTime(now, 'Asia/Tokyo');
+  document.getElementById('tz-sydney').textContent = fmtTime(now, 'Australia/Sydney');
+
+  const etMin = minutesIntoDay(now, 'America/New_York');
+
+  let html = '';
+  let liqScore = 0;
+  let openSessions = [];
+
+  SESSIONS.forEach(s => {
+    const open = isOpen(etMin, s.openET, s.closeET);
+    const minsToOpen = minsUntil(etMin, s.openET);
+    const minsToClose = minsUntil(etMin, s.closeET);
+    const openingSoon = !open && minsToOpen <= 30;
+
+    if (open) { liqScore += s.name === 'London' || s.name === 'New York' ? 40 : 15; openSessions.push(s.name); }
+
+    let rowClass = open ? 'live' : openingSoon ? 'soon' : 'dead';
+    let tagClass = open ? 'tag-live' : openingSoon ? 'tag-soon' : 'tag-closed';
+    let tagText  = open ? 'Live' : openingSoon ? 'Soon' : 'Closed';
+    let detail   = open
+      ? `${s.label} &nbsp;·&nbsp; closes in ${fmtCountdown(minsToClose)}`
+      : openingSoon
+        ? `${s.label} &nbsp;·&nbsp; opens in ${fmtCountdown(minsToOpen)}`
+        : s.label;
+
+    html += `<div class="sess-row ${rowClass}">
+      <div><p class="sn">${s.name}</p><p class="st">${detail}</p></div>
+      <span class="sess-tag ${tagClass}">${tagText}</span>
+    </div>`;
+  });
+
+  document.getElementById('sess-list').innerHTML = html;
+
+  liqScore = Math.min(liqScore, 100);
+  document.getElementById('liq-fill').style.width = liqScore + '%';
+
+  const overlapActive = isOpen(etMin, 8*60, 12*60);
+  const overlapSoon   = !overlapActive && minsUntil(etMin, 8*60) <= 30;
+  const nyClose       = isOpen(etMin, 16*60, 17*60);
+  const deadZone      = liqScore < 20;
+
+  const sc = document.getElementById('status-card');
+  const title = document.getElementById('sc-title');
+  const desc  = document.getElementById('sc-desc');
+
+  if (overlapActive) {
+    sc.className = 'status-card sc-green';
+    title.textContent = 'London / NY overlap — peak liquidity';
+    desc.textContent = 'Best window for limit fills and tightest spreads. Keep your limits live and watch for clean sweeps into your zones.';
+  } else if (overlapSoon) {
+    sc.className = 'status-card sc-amber';
+    title.textContent = `Overlap starts in ${fmtCountdown(minsUntil(etMin, 8*60))}`;
+    desc.textContent = 'Get your levels ready. Spreads will tighten and liquidity will spike at the NY open.';
+  } else if (nyClose) {
+    sc.className = 'status-card sc-amber';
+    title.textContent = 'Approaching NY close';
+    desc.textContent = 'Liquidity dropping off. Consider whether any pending limits should stay live into the dead zone.';
+  } else if (deadZone) {
+    sc.className = 'status-card sc-red';
+    title.textContent = 'Low liquidity — dead zone';
+    desc.textContent = 'Asian session only or between sessions. Limits sitting here risk filling on thin liquidity with wide spreads. Not ideal.';
+  } else if (openSessions.includes('London')) {
+    sc.className = 'status-card sc-green';
+    title.textContent = 'London session active';
+    desc.textContent = 'Good liquidity on forex majors and gold. NY opens soon — overlap incoming.';
+  } else if (openSessions.includes('New York')) {
+    sc.className = 'status-card sc-green';
+    title.textContent = 'New York session active';
+    desc.textContent = 'Solid liquidity. Post-overlap but still good for limit entries on majors and indices.';
+  } else {
+    sc.className = 'status-card';
+    title.textContent = 'Asian session';
+    desc.textContent = 'Reasonable liquidity for JPY pairs and gold. Thinner for EUR/GBP majors. London opens ' + fmtCountdown(minsUntil(etMin, 3*60)) + '.';
+  }
+}
+
+updateSessions();
+setInterval(updateSessions, 30000);
+
+/* ─── COPY ─── */
+function cp(id, btn) {
+  const val = document.getElementById(id).textContent;
+  if (val === '—') return;
+  navigator.clipboard.writeText(val).then(() => {
+    btn.textContent = 'Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+</script>
+</body>
+</html>
