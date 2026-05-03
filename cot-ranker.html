@@ -663,7 +663,7 @@ function renderCurrencyChips(scores) {
   document.getElementById('currency-chips').innerHTML=sorted.filter(c=>scores[c]).map(c=>{
     const s=scores[c].score, cls=s>0?'bull':s<0?'bear':'neu', sc=s>0?'pos':s<0?'neg':'zero';
     const mom=scores[c].momentum||getMomentum(c);
-    var momHtml=mom&&mom.arrows?momTag('',mom).replace(currency+' ',''):'';
+    var momHtml=mom&&mom.arrows?momTag('',mom).replace(c+' ',''):'';
     return '<div class="currency-chip '+cls+'"><span class="chip-name">'+c+'</span><span class="chip-score '+sc+'">'+(s>0?'+':'')+s+'</span>'+momHtml+'</div>';
   }).join('');
 }
