@@ -979,7 +979,8 @@ function getMentorKey(){return localStorage.getItem('pxd_mentor_key')||'';}
 function saveMentorKey(){const k=document.getElementById('mentor-api-key').value.trim();if(!k)return;localStorage.setItem('pxd_mentor_key',k);document.getElementById('mentor-setup').style.display='none';alert('API key saved. Click Analyze My Trading to begin.');}
 
 function buildTradeContext(){
-  const live=trades.filter(t=>t.quality==='Live Trade').slice(-30);
+  // Only analyze trades logged with the new form (have tradeType field populated)
+  const live=trades.filter(t=>t.quality==='Live Trade' && t.tradeType).slice(-30);
   if(!live.length)return null;
   const wins=live.filter(t=>t.outcome==='Win').length;
   const wr=((wins/live.length)*100).toFixed(1);
@@ -1013,7 +1014,7 @@ DAILY BIAS CONFLICT — taking a trade against the Daily bias is ONLY valid as a
 
 GRADE SYSTEM — A/B/C/D based on setup quality. Counter-trend MSS entries automatically grade one level lower by design.
 
-SCORE — 4 confluence factors worth 25 points each. 75+ required to take a trade. 100 = all 4 factors confirmed.
+SCORE SYSTEM — 4 confluence factors worth 25 points each. Only possible scores are 25, 50, 75, or 100. The trader's minimum to take a trade is 75 — meaning all trades in this data scored either 75 or 100. Do NOT flag below-75 trades as they are physically impossible with the current system.
 
 WHAT TO ACTUALLY PENALIZE:
 - Trades taken below score 75
@@ -1039,7 +1040,7 @@ async function runMentorAnalysis(){
   const key=getMentorKey();
   if(!key){document.getElementById('mentor-setup').style.display='block';document.getElementById('mentor-empty').style.display='none';return;}
   const ctx=buildTradeContext();
-  if(!ctx||ctx.totalTrades<3){alert('You need at least 3 live trades to generate analysis.');return;}
+  if(!ctx||ctx.totalTrades<3){alert('You need at least 3 trades logged with the new form to generate analysis. Keep logging and come back.');return;}
   document.getElementById('mentor-empty').style.display='none';
   document.getElementById('mentor-results').style.display='none';
   document.getElementById('mentor-loading').style.display='block';
