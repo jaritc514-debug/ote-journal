@@ -240,6 +240,17 @@ tr:hover td{background:var(--bg3);}
 .sample-low{background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.25);}
 .sample-mid{background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.25);}
 .sample-ok{background:rgba(34,197,94,0.10);color:#22c55e;border:1px solid rgba(34,197,94,0.2);}
+.mentor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.mentor-section{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:20px;margin-bottom:12px;}
+.mentor-section-title{font-family:'Playfair Display',serif;font-size:14px;font-weight:600;color:var(--gold);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.mentor-item{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;font-size:13px;color:var(--text2);line-height:1.5;}
+.mentor-item-icon{font-size:16px;margin-top:1px;flex-shrink:0;}
+.mentor-chat-msg{padding:10px 14px;border-radius:8px;font-size:13px;line-height:1.5;max-width:85%;}
+.mentor-chat-user{background:var(--bg4);border:1px solid var(--border2);color:var(--text);align-self:flex-end;}
+.mentor-chat-ai{background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);color:var(--text);align-self:flex-start;}
+.mentor-rule{background:var(--red-dim);border:1px solid var(--red-border);border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:12px;color:var(--text);}
+.mentor-strength{background:var(--green-dim);border:1px solid var(--green-border);border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:12px;color:var(--text);}
+.mentor-focus{background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:6px;padding:12px;font-size:13px;color:var(--text);}
 /* Research field subtle styling */
 .field-research .field-label{color:var(--text3);font-style:italic;}
 .field-research .field-label::after{content:' — research only';font-size:9px;opacity:0.6;}
@@ -265,6 +276,7 @@ tr:hover td{background:var(--bg3);}
     <button class="nav-btn" onclick="showPage('log',this)">Trade Log</button>
     <button class="nav-btn" onclick="showPage('accounts',this)">Accounts</button>
     <button class="nav-btn" onclick="showPage('analysis',this)">Analysis</button>
+    <button class="nav-btn" onclick="showPage('mentor',this)">AI Mentor</button>
   </nav>
   <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-txt">Connecting...</span></div>
 </div>
@@ -445,6 +457,55 @@ tr:hover td{background:var(--bg3);}
 <div id="page-detail" class="page">
   <div class="detail-back" onclick="backFromDetail()">&#8592; Back to Trade Log</div>
   <div id="detail-content"></div>
+</div>
+<!-- AI MENTOR -->
+<div id="page-mentor" class="page">
+  <div class="mentor-header">
+    <div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--gold)">AI Mentor</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">Powered by Claude — analyzing your actual trade data</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button id="mentor-analyze-btn" onclick="runMentorAnalysis()" class="btn-save" style="padding:8px 20px;">&#9881; Analyze My Trading</button>
+    </div>
+  </div>
+
+  <!-- API Key setup -->
+  <div id="mentor-setup" class="section" style="display:none;">
+    <div class="section-header"><span class="section-num">&#9888;</span><span class="section-title">API Key Required</span></div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px;">Enter your Anthropic API key to enable AI analysis. It's stored only in your browser — never sent anywhere except directly to Anthropic.</p>
+    <div style="display:flex;gap:8px;">
+      <input type="password" id="mentor-api-key" placeholder="sk-ant-..." style="flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:8px 12px;outline:none;">
+      <button onclick="saveMentorKey()" class="btn-save" style="padding:8px 16px;">Save Key</button>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div id="mentor-loading" style="display:none;text-align:center;padding:60px 20px;">
+    <div style="font-size:28px;margin-bottom:12px;">&#129504;</div>
+    <div style="font-family:'Playfair Display',serif;font-size:16px;color:var(--gold);margin-bottom:8px;">Analyzing your trades...</div>
+    <div style="font-size:12px;color:var(--text3)">Reading your last 30 trades and generating feedback</div>
+  </div>
+
+  <!-- Results -->
+  <div id="mentor-results" style="display:none;">
+    <div id="mentor-report"></div>
+    <!-- Chat -->
+    <div class="section" style="margin-top:12px;">
+      <div class="section-header"><span class="section-num">&#128172;</span><span class="section-title">Ask Your Mentor</span></div>
+      <div id="mentor-chat-log" style="min-height:80px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px;"></div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="mentor-chat-input" placeholder="e.g. Why are my sells underperforming? Should I stop taking counter-trend trades?" style="flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;outline:none;" onkeydown="if(event.key==='Enter')sendMentorChat()">
+        <button onclick="sendMentorChat()" class="btn-save" style="padding:8px 16px;">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div id="mentor-empty" class="empty" style="margin-top:40px;">
+    <div class="empty-icon">&#129504;</div>
+    <div>Click "Analyze My Trading" to get AI feedback on your trades</div>
+  </div>
 </div>
 </div>
 <script>
@@ -909,6 +970,114 @@ async function exportJSON(){
     const w=window.open();
     w.document.write('<pre style="background:#111;color:#eee;padding:20px;font-size:12px;">'+json+'</pre>');
   }
+}
+
+// ── AI MENTOR ──────────────────────────────────────────────
+let mentorChatHistory=[];
+
+function getMentorKey(){return localStorage.getItem('pxd_mentor_key')||'';}
+function saveMentorKey(){const k=document.getElementById('mentor-api-key').value.trim();if(!k)return;localStorage.setItem('pxd_mentor_key',k);document.getElementById('mentor-setup').style.display='none';alert('API key saved. Click Analyze My Trading to begin.');}
+
+function buildTradeContext(){
+  const live=trades.filter(t=>t.quality==='Live Trade').slice(-30);
+  if(!live.length)return null;
+  const wins=live.filter(t=>t.outcome==='Win').length;
+  const wr=((wins/live.length)*100).toFixed(1);
+  const rs=live.map(t=>parseFloat(t.resultR)).filter(v=>!isNaN(v));
+  const totalR=rs.reduce((a,b)=>a+b,0).toFixed(2);
+  const summary={totalTrades:live.length,winRate:wr+'%',totalR,trades:live.map(t=>({date:t.entryDate,pair:t.pair,direction:t.direction,grade:t.grade,execTf:t.execTf,outcome:t.outcome,resultR:t.resultR,score:t.score,cotAlign:t.cotAlign,cotRegime:t.cotRegime,fibZone:t.fibZone,tradeType:t.tradeType,liqSweep:t.liqSweep,emoBefore:t.emoBefore,mistakes:t.mistakes,followed:t.followed,dailyBias:t.dailyBias}))};
+  return summary;
+}
+
+function buildSystemPrompt(){
+  return `You are an elite forex and gold trading mentor analyzing a trader's journal data. The trader uses a proprietary system called the Killshot — a fibonacci-based entry at the 70.5% retracement level. Their methodology requires: HTF alignment, liquidity sweep, BOS or MSS, and an imbalance (FVG) as confluence factors. They trade 4H and 15M timeframes, use COT data for bias, and grade trades A-D based on setup quality.
+
+Your job is to give brutally honest, data-driven feedback. Don't sugarcoat. If something is costing them R, say it clearly. If they're breaking rules, call it out. Be specific — reference actual patterns from their data.
+
+Format your analysis as JSON with this exact structure:
+{
+  "weeklyFocus": "One specific actionable thing to improve this week based on the data",
+  "strengths": ["strength 1", "strength 2", "strength 3"],
+  "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+  "ruleBreaks": ["rule break 1 if any", "rule break 2 if any"],
+  "patterns": ["interesting pattern 1", "interesting pattern 2"],
+  "verdict": "2-3 sentence overall assessment of where this trader is right now"
+}
+
+Return ONLY the JSON. No preamble, no markdown, no explanation outside the JSON.`;
+}
+
+async function runMentorAnalysis(){
+  const key=getMentorKey();
+  if(!key){document.getElementById('mentor-setup').style.display='block';document.getElementById('mentor-empty').style.display='none';return;}
+  const ctx=buildTradeContext();
+  if(!ctx||ctx.totalTrades<3){alert('You need at least 3 live trades to generate analysis.');return;}
+  document.getElementById('mentor-empty').style.display='none';
+  document.getElementById('mentor-results').style.display='none';
+  document.getElementById('mentor-loading').style.display='block';
+  document.getElementById('mentor-analyze-btn').disabled=true;
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:buildSystemPrompt(),messages:[{role:'user',content:'Here is my trading data for analysis:\n\n'+JSON.stringify(ctx,null,2)}]})
+    });
+    if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||'API error');}
+    const data=await resp.json();
+    const text=data.content[0].text.replace(/```json|```/g,'').trim();
+    const result=JSON.parse(text);
+    mentorChatHistory=[{role:'user',content:'Here is my trading data:\n\n'+JSON.stringify(ctx,null,2)},{role:'assistant',content:JSON.stringify(result)}];
+    renderMentorReport(result);
+    document.getElementById('mentor-loading').style.display='none';
+    document.getElementById('mentor-results').style.display='block';
+  }catch(err){
+    document.getElementById('mentor-loading').style.display='none';
+    document.getElementById('mentor-empty').style.display='block';
+    alert('Error: '+err.message+'\n\nCheck your API key is correct.');
+  }
+  document.getElementById('mentor-analyze-btn').disabled=false;
+}
+
+function renderMentorReport(r){
+  const el=document.getElementById('mentor-report');
+  const strengths=(r.strengths||[]).map(s=>`<div class="mentor-strength">✓ ${s}</div>`).join('');
+  const weaknesses=(r.weaknesses||[]).map(w=>`<div class="mentor-rule">✗ ${w}</div>`).join('');
+  const rules=(r.ruleBreaks||[]).length?`<div class="mentor-section"><div class="mentor-section-title">⚠ Rule Breaks Detected</div>${(r.ruleBreaks||[]).map(rb=>`<div class="mentor-rule">⚠ ${rb}</div>`).join('')}</div>`:'';
+  const patterns=(r.patterns||[]).map(p=>`<div class="mentor-item"><span class="mentor-item-icon">→</span><span>${p}</span></div>`).join('');
+  el.innerHTML=`
+    <div class="mentor-section"><div class="mentor-section-title">📌 This Week's Focus</div><div class="mentor-focus">${r.weeklyFocus||'--'}</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div class="mentor-section"><div class="mentor-section-title">✓ Strengths</div>${strengths}</div>
+      <div class="mentor-section"><div class="mentor-section-title">✗ Weaknesses</div>${weaknesses}</div>
+    </div>
+    ${rules}
+    <div class="mentor-section"><div class="mentor-section-title">→ Patterns Detected</div>${patterns}</div>
+    <div class="mentor-section"><div class="mentor-section-title">Overall Verdict</div><div style="font-size:13px;color:var(--text);line-height:1.6;">${r.verdict||'--'}</div></div>
+  `;
+}
+
+async function sendMentorChat(){
+  const key=getMentorKey();if(!key)return;
+  const input=document.getElementById('mentor-chat-input');
+  const msg=input.value.trim();if(!msg)return;
+  input.value='';
+  const log=document.getElementById('mentor-chat-log');
+  log.innerHTML+=`<div class="mentor-chat-msg mentor-chat-user">${msg}</div>`;
+  log.scrollTop=log.scrollHeight;
+  mentorChatHistory.push({role:'user',content:msg});
+  const thinking=document.createElement('div');thinking.className='mentor-chat-msg mentor-chat-ai';thinking.textContent='Thinking...';log.appendChild(thinking);
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:buildSystemPrompt()+'\n\nFor follow-up questions, respond in plain conversational text, not JSON. Be direct and specific.',messages:mentorChatHistory})
+    });
+    const data=await resp.json();
+    const reply=data.content[0].text;
+    mentorChatHistory.push({role:'assistant',content:reply});
+    thinking.textContent=reply;
+    log.scrollTop=log.scrollHeight;
+  }catch(err){thinking.textContent='Error: '+err.message;}
 }
 </script>
 </body>
