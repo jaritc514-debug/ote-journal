@@ -398,6 +398,25 @@ tr:hover td{background:var(--bg3);}
 <div id="page-log" class="page">
   <div class="section">
     <div class="log-header"><div class="log-title">Trade Log</div><div style="display:flex;align-items:center;gap:10px;"><button onclick="exportJSON()" style="background:var(--gold);color:#000;border:none;padding:7px 16px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.5px;">⬇ Export JSON</button><div class="view-toggle"><button class="toggle-btn active" id="toggle-table" onclick="setLogView('table')" title="Table">&#9776;</button><button class="toggle-btn" id="toggle-cards" onclick="setLogView('cards')" title="Cards">&#8862;</button></div></div></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+      <select id="filter-tf" onchange="renderLog()" style="background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 10px;outline:none;cursor:pointer;">
+        <option value="">All TFs</option><option value="4H">4H</option><option value="15m">15m</option>
+      </select>
+      <select id="filter-dir" onchange="renderLog()" style="background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 10px;outline:none;cursor:pointer;">
+        <option value="">All Directions</option><option value="Buy">Buy</option><option value="Sell">Sell</option>
+      </select>
+      <select id="filter-grade" onchange="renderLog()" style="background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 10px;outline:none;cursor:pointer;">
+        <option value="">All Grades</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+      </select>
+      <select id="filter-outcome" onchange="renderLog()" style="background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 10px;outline:none;cursor:pointer;">
+        <option value="">All Outcomes</option><option value="Win">Win</option><option value="Loss">Loss</option><option value="Breakeven">Breakeven</option>
+      </select>
+      <select id="filter-quality" onchange="renderLog()" style="background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 10px;outline:none;cursor:pointer;">
+        <option value="">All Types</option><option value="Live Trade">Live Trade</option><option value="Missed Setup">Missed Setup</option><option value="Analysis Only">Analysis Only</option>
+      </select>
+      <button onclick="clearFilters()" style="background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:11px;padding:5px 10px;cursor:pointer;">Clear</button>
+      <span id="filter-count" style="font-size:11px;color:var(--text3);align-self:center;font-family:'DM Mono',monospace;margin-left:4px;"></span>
+    </div>
     <div id="log-table-wrap" class="table-wrap"><table><thead><tr><th>Entry Date</th><th>Close Date</th><th>Pair</th><th>Exec TF</th><th>Direction</th><th>Grade</th><th>P&L</th><th>Accounts</th><th>Actions</th></tr></thead><tbody id="log-body"></tbody></table><div id="log-empty" class="empty"><div class="empty-icon">&#128203;</div><div>No trades logged yet.</div></div></div>
     <div id="log-cards-wrap" style="display:none"><div class="cards-grid" id="cards-body"></div><div id="cards-empty" class="empty" style="display:none"><div class="empty-icon">&#128203;</div><div>No trades logged yet.</div></div></div>
   </div>
@@ -675,8 +694,21 @@ function setLogView(v){
   renderLog();
 }
 
+function clearFilters(){['filter-tf','filter-dir','filter-grade','filter-outcome','filter-quality'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});renderLog();}
+
 function renderLog(){
-  const live=trades.filter(t=>t.quality!=='Analysis Only');
+  const tf=document.getElementById('filter-tf')?.value||'';
+  const dir=document.getElementById('filter-dir')?.value||'';
+  const grade=document.getElementById('filter-grade')?.value||'';
+  const outcome=document.getElementById('filter-outcome')?.value||'';
+  const quality=document.getElementById('filter-quality')?.value||'';
+  let live=trades.filter(t=>t.quality!=='Analysis Only');
+  if(tf)live=live.filter(t=>(t.execTf||t.tf||'')===tf);
+  if(dir)live=live.filter(t=>t.direction===dir);
+  if(grade)live=live.filter(t=>t.grade===grade);
+  if(outcome)live=live.filter(t=>t.outcome===outcome);
+  if(quality)live=live.filter(t=>t.quality===quality);
+  const fc=document.getElementById('filter-count');if(fc)fc.textContent=live.length+' of '+trades.length+' trades';
   const body=document.getElementById('log-body'),empty=document.getElementById('log-empty');
   if(!live.length){body.innerHTML='';empty.style.display='block';}
   else{empty.style.display='none';body.innerHTML=live.map(t=>`<tr><td style="font-family:'DM Mono',monospace;font-size:11px">${t.entryDate||t.date||'--'}</td><td style="font-family:'DM Mono',monospace;font-size:11px">${t.closeDate||'--'}</td><td style="font-weight:700;color:var(--gold)">${t.pair||'--'}</td><td>${tfBadge(t.execTf||t.tf||'')}</td><td>${dBadge(t.direction)}</td><td>${gBadge(t.grade)}</td><td style="font-weight:700;color:${pColor(t.pnl)};font-family:'DM Mono',monospace">${fmtPnl(t.pnl)}</td><td>${getAccBadge(t)}</td><td><button class="btn-view" onclick="viewTrade(${t.rowNum})">View</button><button class="btn-edit" onclick="editTrade(${t.rowNum})">Edit</button><button class="btn-danger" onclick="deleteTrade(${t.rowNum})">Delete</button></td></tr>`).join('');}
