@@ -291,6 +291,7 @@
 
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('entry')">Limit Entry</button>
+  <button class="tab-btn" onclick="switchTab('conv')">Futures &rarr; CFD</button>
   <button class="tab-btn" onclick="switchTab('size')">Position Size</button>
   <button class="tab-btn" onclick="switchTab('sessions')">Sessions</button>
 </div>
@@ -382,6 +383,93 @@
   </div>
 
   <div class="logic" id="logic"><span style="opacity:0.4; list-style:none;">Enter prices above to see calculation breakdown</span></div>
+</div>
+
+
+<!-- ════════════════════════════════════════
+     TAB — FUTURES → CFD ZONE CONVERTER
+════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-conv">
+
+  <p class="section-label" style="margin-bottom:10px;">Direction &amp; Pair (marked on futures chart)</p>
+  <div class="card">
+    <div class="dir-row">
+      <button class="dir-btn buy" id="cb" onclick="setConvDir('buy')">Buy futures</button>
+      <button class="dir-btn" id="cs" onclick="setConvDir('sell')">Sell futures</button>
+    </div>
+    <div class="field">
+      <label>Instrument pair</label>
+      <select id="conv-inst" onchange="calcConv()"></select>
+    </div>
+  </div>
+
+  <p class="section-label">Current live prices</p>
+  <div class="card">
+    <div class="g2">
+      <div class="field"><label id="conv-fut-cur-lbl">Futures current price</label><input type="number" id="conv-fut-cur" placeholder="0.71000" step="any" oninput="calcConv()"/></div>
+      <div class="field"><label id="conv-cfd-cur-lbl">CFD current price</label><input type="number" id="conv-cfd-cur" placeholder="0.70980" step="any" oninput="calcConv()"/></div>
+    </div>
+  </div>
+
+  <p class="section-label">Your zone (marked on futures)</p>
+  <div class="card">
+    <div class="g3">
+      <div class="field"><label id="conv-entry-lbl">Entry (futures)</label><input type="number" id="conv-entry" placeholder="0.71215" step="any" oninput="calcConv()"/></div>
+      <div class="field"><label id="conv-sl-lbl">Stop loss (futures)</label><input type="number" id="conv-sl" placeholder="0.71560" step="any" oninput="calcConv()"/></div>
+      <div class="field"><label id="conv-tp-lbl">Take profit (futures)</label><input type="number" id="conv-tp" placeholder="optional" step="any" oninput="calcConv()"/></div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <div class="fill-rule buy" id="conv-flip-box" style="display:none;">
+    <p class="ft" id="conv-flip-title">Direction flips on CFD</p>
+    <p id="conv-flip-text"></p>
+  </div>
+
+  <div class="warn" id="conv-warn"><strong>Unusual offset detected.</strong> <span id="conv-warn-txt"></span></div>
+
+  <p class="section-label">Enter this zone on your CFD chart</p>
+  <div class="outputs">
+    <div class="out-card entry-card">
+      <p class="ol">Entry</p>
+      <p class="ov" id="conv-out-entry">—</p>
+      <button class="copy-btn" onclick="cp('conv-out-entry', this)">Copy</button>
+    </div>
+    <div class="out-card sl-card">
+      <p class="ol">Stop loss</p>
+      <p class="ov" id="conv-out-sl">—</p>
+      <button class="copy-btn" onclick="cp('conv-out-sl', this)">Copy</button>
+    </div>
+    <div class="out-card tp-card">
+      <p class="ol">Take profit</p>
+      <p class="ov" id="conv-out-tp">—</p>
+      <button class="copy-btn" onclick="cp('conv-out-tp', this)">Copy</button>
+    </div>
+  </div>
+
+  <button class="copy-btn" style="width:100%; padding:10px; font-size:12px;" onclick="sendToEntry()">Send CFD zone → Limit Entry tab</button>
+
+  <p class="section-label" style="margin-top:14px;">Offset &amp; zone size</p>
+  <div class="metrics">
+    <div class="metric">
+      <p class="ml">Basis (offset)</p>
+      <p class="mv" id="conv-m-basis">—</p>
+      <p class="ms" id="conv-m-basis-lbl">price</p>
+    </div>
+    <div class="metric">
+      <p class="ml">Zone size — futures</p>
+      <p class="mv" id="conv-m-zfut">—</p>
+      <p class="ms">price distance</p>
+    </div>
+    <div class="metric">
+      <p class="ml">Zone size — CFD</p>
+      <p class="mv" id="conv-m-zcfd">—</p>
+      <p class="ms">price distance</p>
+    </div>
+  </div>
+
+  <div class="logic" id="conv-logic"><span style="opacity:0.4;">Pick a pair and enter prices above to see the conversion breakdown</span></div>
 </div>
 
 
@@ -597,6 +685,170 @@ function calcEntry() {
     lines.push(`SL / TP = TV level + delta only (exits fill on ask)`);
   }
   document.getElementById('logic').innerHTML = lines.map(l => `<span>${l}</span>`).join('');
+}
+
+/* ─── FUTURES → CFD CONVERTER ─── */
+const CONV_INSTRUMENTS = [
+  { id:'gc-xau',  group:'Metals',      label:'Gold — GC → XAUUSD',      mode:'direct',  futDec:2, cfdDec:2, pip:0.01,   pipLbl:'pts',  typicalBasisPips: 500 },
+  { id:'si-xag',  group:'Metals',      label:'Silver — SI → XAGUSD',    mode:'direct',  futDec:3, cfdDec:3, pip:0.001,  pipLbl:'pts',  typicalBasisPips: 500 },
+  { id:'nq-nas',  group:'Indices',     label:'Nasdaq — NQ → NAS100',    mode:'direct',  futDec:1, cfdDec:1, pip:1,      pipLbl:'pts',  typicalBasisPips: 300 },
+  { id:'es-us500',group:'Indices',     label:'S&amp;P — ES → US500',    mode:'direct',  futDec:1, cfdDec:1, pip:1,      pipLbl:'pts',  typicalBasisPips: 300 },
+  { id:'ym-us30', group:'Indices',     label:'Dow — YM → US30',         mode:'direct',  futDec:0, cfdDec:0, pip:1,      pipLbl:'pts',  typicalBasisPips: 300 },
+  { id:'6e-eur',  group:'FX — Direct', label:'Euro — 6E → EURUSD',      mode:'direct',  futDec:5, cfdDec:5, pip:0.0001, pipLbl:'pips', typicalBasisPips: 50 },
+  { id:'6b-gbp',  group:'FX — Direct', label:'Pound — 6B → GBPUSD',     mode:'direct',  futDec:5, cfdDec:5, pip:0.0001, pipLbl:'pips', typicalBasisPips: 50 },
+  { id:'6a-aud',  group:'FX — Direct', label:'Aussie — 6A → AUDUSD',    mode:'direct',  futDec:5, cfdDec:5, pip:0.0001, pipLbl:'pips', typicalBasisPips: 50 },
+  { id:'6n-nzd',  group:'FX — Direct', label:'Kiwi — 6N → NZDUSD',      mode:'direct',  futDec:5, cfdDec:5, pip:0.0001, pipLbl:'pips', typicalBasisPips: 50 },
+  { id:'6j-jpy',  group:'FX — Inverse',label:'Yen — 6J → USDJPY',       mode:'inverse', futDec:6, cfdDec:3, pip:0.01,   pipLbl:'pips', typicalBasisPips: 50 },
+  { id:'6c-cad',  group:'FX — Inverse',label:'Loonie — 6C → USDCAD',    mode:'inverse', futDec:5, cfdDec:5, pip:0.0001, pipLbl:'pips', typicalBasisPips: 50 },
+  { id:'6s-chf',  group:'FX — Inverse',label:'Franc — 6S → USDCHF',     mode:'inverse', futDec:5, cfdDec:5, pip:0.0001, pipLbl:'pips', typicalBasisPips: 50 },
+];
+
+(function populateConvSelect() {
+  const sel = document.getElementById('conv-inst');
+  let lastGroup = null;
+  let html = '';
+  CONV_INSTRUMENTS.forEach(inst => {
+    if (inst.group !== lastGroup) {
+      if (lastGroup !== null) html += '</optgroup>';
+      html += `<optgroup label="${inst.group}">`;
+      lastGroup = inst.group;
+    }
+    html += `<option value="${inst.id}">${inst.label}</option>`;
+  });
+  html += '</optgroup>';
+  sel.innerHTML = html;
+})();
+
+function convInst() {
+  return CONV_INSTRUMENTS.find(i => i.id === document.getElementById('conv-inst').value) || CONV_INSTRUMENTS[0];
+}
+
+let convDir = 'buy';
+function setConvDir(d) {
+  convDir = d;
+  document.getElementById('cb').className = 'dir-btn' + (d==='buy' ? ' buy' : '');
+  document.getElementById('cs').className = 'dir-btn' + (d==='sell' ? ' sell' : '');
+  calcConv();
+}
+
+function calcConv() {
+  const inst = convInst();
+  const futCur = parseFloat(document.getElementById('conv-fut-cur').value);
+  const cfdCur = parseFloat(document.getElementById('conv-cfd-cur').value);
+  const futEntry = parseFloat(document.getElementById('conv-entry').value);
+  const futSL = parseFloat(document.getElementById('conv-sl').value);
+  const futTP = parseFloat(document.getElementById('conv-tp').value);
+
+  document.getElementById('conv-fut-cur-lbl').textContent = 'Futures current price';
+  document.getElementById('conv-cfd-cur-lbl').textContent = 'CFD current price';
+  document.getElementById('conv-entry-lbl').textContent = 'Entry (futures)';
+  document.getElementById('conv-sl-lbl').textContent = 'Stop loss (futures)';
+  document.getElementById('conv-tp-lbl').textContent = 'Take profit (futures)';
+
+  const flipBox = document.getElementById('conv-flip-box');
+  const cfdDir = inst.mode === 'inverse' ? (convDir === 'buy' ? 'sell' : 'buy') : convDir;
+  if (inst.mode === 'inverse') {
+    flipBox.style.display = 'block';
+    flipBox.className = 'fill-rule ' + (cfdDir === 'buy' ? 'buy' : 'sell');
+    document.getElementById('conv-flip-title').textContent =
+      `${convDir === 'buy' ? 'Buy' : 'Sell'} futures → ${cfdDir === 'buy' ? 'Buy' : 'Sell'} on ${inst.label.split('→')[1].trim()}`;
+    const verb = { buy: 'Buying', sell: 'Selling' };
+    document.getElementById('conv-flip-text').textContent =
+      `${inst.label.split('—')[0].trim()} futures are quoted USD-per-unit, the inverse of ${inst.label.split('→')[1].trim()}'s quote convention. ${verb[convDir]} the futures is the same market view as ${verb[cfdDir].toLowerCase()} the CFD.`;
+  } else {
+    flipBox.style.display = 'none';
+  }
+
+  const warn = document.getElementById('conv-warn');
+  const logicEl = document.getElementById('conv-logic');
+
+  if (isNaN(futCur) || isNaN(cfdCur)) {
+    ['conv-out-entry','conv-out-sl','conv-out-tp'].forEach(id => document.getElementById(id).textContent = '—');
+    ['conv-m-basis','conv-m-zfut','conv-m-zcfd'].forEach(id => document.getElementById(id).textContent = '—');
+    logicEl.innerHTML = '<span style="opacity:0.4;">Pick a pair and enter prices above to see the conversion breakdown</span>';
+    warn.style.display = 'none';
+    return;
+  }
+
+  let basis, convert;
+  if (inst.mode === 'direct') {
+    basis = cfdCur - futCur;
+    convert = (p) => p + basis;
+  } else {
+    const impliedCfdCur = 1 / futCur;
+    basis = cfdCur - impliedCfdCur;
+    convert = (p) => (1 / p) + basis;
+  }
+
+  const outEntry = isNaN(futEntry) ? null : convert(futEntry);
+  const outSL = isNaN(futSL) ? null : convert(futSL);
+  const outTP = isNaN(futTP) ? null : convert(futTP);
+
+  document.getElementById('conv-out-entry').textContent = outEntry === null ? '—' : outEntry.toFixed(inst.cfdDec);
+  document.getElementById('conv-out-sl').textContent = outSL === null ? '—' : outSL.toFixed(inst.cfdDec);
+  document.getElementById('conv-out-tp').textContent = outTP === null ? '—' : outTP.toFixed(inst.cfdDec);
+
+  document.getElementById('conv-m-basis').textContent = (basis >= 0 ? '+' : '') + basis.toFixed(inst.cfdDec);
+  document.getElementById('conv-m-basis-lbl').textContent = inst.mode === 'inverse' ? 'price (after reciprocal)' : 'price';
+
+  if (outEntry !== null && outSL !== null) {
+    const zFut = Math.abs(futSL - futEntry);
+    const zCfd = Math.abs(outSL - outEntry);
+    document.getElementById('conv-m-zfut').textContent = zFut.toFixed(inst.futDec);
+    document.getElementById('conv-m-zcfd').textContent = zCfd.toFixed(inst.cfdDec);
+  } else {
+    document.getElementById('conv-m-zfut').textContent = '—';
+    document.getElementById('conv-m-zcfd').textContent = '—';
+  }
+
+  const basisPips = Math.abs(basis) / inst.pip;
+  if (basisPips > inst.typicalBasisPips) {
+    warn.style.display = 'block';
+    document.getElementById('conv-warn-txt').textContent =
+      ` The offset between futures and CFD is ${basisPips.toFixed(0)} ${inst.pipLbl} — larger than typical for this pair. Double-check you read the right prices off each chart and picked the right instrument.`;
+  } else {
+    warn.style.display = 'none';
+  }
+
+  const lines = [];
+  if (inst.mode === 'direct') {
+    lines.push(`Basis = CFD current − futures current = ${cfdCur} − ${futCur} = ${(basis>=0?'+':'')}${basis.toFixed(inst.cfdDec)}`);
+    lines.push(`CFD price = futures price + basis (zone size preserved exactly)`);
+  } else {
+    lines.push(`Implied CFD from futures = 1 / ${futCur} = ${(1/futCur).toFixed(inst.cfdDec)}`);
+    lines.push(`Basis = CFD current − implied = ${cfdCur} − ${(1/futCur).toFixed(inst.cfdDec)} = ${(basis>=0?'+':'')}${basis.toFixed(inst.cfdDec)}`);
+    lines.push(`CFD price = (1 / futures price) + basis — reciprocal quote, so zone width and order flip`);
+    lines.push(`${convDir === 'buy' ? 'Buy' : 'Sell'} futures = ${cfdDir === 'buy' ? 'Buy' : 'Sell'} CFD`);
+  }
+  logicEl.innerHTML = lines.map(l => `<span>${l}</span>`).join('');
+}
+
+function convGroupToInstType(group) {
+  if (group === 'Metals') return 'gold';
+  if (group === 'Indices') return 'indices';
+  return 'forex';
+}
+
+function sendToEntry() {
+  const inst = convInst();
+  const entryVal = document.getElementById('conv-out-entry').textContent;
+  const slVal = document.getElementById('conv-out-sl').textContent;
+  const tpVal = document.getElementById('conv-out-tp').textContent;
+  if (entryVal === '—' && slVal === '—') return;
+
+  const cfdDir = inst.mode === 'inverse' ? (convDir === 'buy' ? 'sell' : 'buy') : convDir;
+
+  document.getElementById('inst').value = convGroupToInstType(inst.group);
+  if (entryVal !== '—') document.getElementById('entry').value = entryVal;
+  if (slVal !== '—') document.getElementById('sl').value = slVal;
+  if (tpVal !== '—') document.getElementById('tp').value = tpVal;
+
+  setDir(cfdDir);
+
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-entry').classList.add('active');
+  document.querySelectorAll('.tab-btn')[0].classList.add('active');
 }
 
 /* ─── POSITION SIZE CALCULATOR ─── */
