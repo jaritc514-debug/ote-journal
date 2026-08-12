@@ -1,1 +1,4 @@
 .wrangler/
+worker/*.decoded.html
+worker/*.prefix.txt
+worker/*.suffix.txt
