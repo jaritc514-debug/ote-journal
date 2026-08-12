@@ -277,6 +277,7 @@ tr:hover td{background:var(--bg3);}
     <button class="nav-btn" onclick="showPage('accounts',this)">Accounts</button>
     <button class="nav-btn" onclick="showPage('analysis',this)">Analysis</button>
     <button class="nav-btn" onclick="showPage('mentor',this)">AI Mentor</button>
+    <button class="nav-btn" onclick="showPage('playbook',this)">Playbook</button>
   </nav>
   <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-txt">Connecting...</span></div>
 </div>
@@ -505,6 +506,121 @@ tr:hover td{background:var(--bg3);}
   <div id="mentor-empty" class="empty" style="margin-top:40px;">
     <div class="empty-icon">&#129504;</div>
     <div>Click "Analyze My Trading" to get AI feedback on your trades</div>
+  </div>
+</div>
+<!-- PLAYBOOK -->
+<div id="page-playbook" class="page">
+  <div style="margin-bottom:16px;">
+    <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--gold)">Playbook — Supply &amp; Demand Zones</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:2px">Consolidated from the OTC course material, PxD Bot.txt zone logic, and rules.json. Reference only — this doesn't feed the journal fields yet.</div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-num">01</span><span class="section-title">Candle Classification</span></div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">Every candle is classified by body size as a % of its total range (high to low). This is what drives base and leg-out detection below.</p>
+    <div class="dash-stats" style="grid-template-columns:repeat(3,1fr);">
+      <div class="dash-stat">
+        <div class="dash-stat-val" style="font-size:20px;color:var(--text2)">&le; 49%</div>
+        <div class="dash-stat-lbl">Indecisive (Basing)</div>
+        <div class="dash-stat-sub">Balance between supply &amp; demand — orders being accumulated. This is what forms a base.</div>
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-val" style="font-size:20px;color:var(--amber)">50&ndash;75%</div>
+        <div class="dash-stat-lbl">Decisive</div>
+        <div class="dash-stat-sub">Institutional activity — one side consuming orders. Can end a base (leg-out).</div>
+      </div>
+      <div class="dash-stat">
+        <div class="dash-stat-val" style="font-size:20px;color:var(--gold)">&gt; 75%</div>
+        <div class="dash-stat-lbl">Explosive</div>
+        <div class="dash-stat-sub">Body &gt;75% of range AND abnormally bigger than surrounding candles. Clear institutional activity.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-num">02</span><span class="section-title">Base &amp; Leg-Out Formation</span></div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px;"><strong style="color:var(--text)">Base:</strong> one or more <em>consecutive</em> indecisive candles. High/low of the base tracks the highest high and lowest low across those candles.</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px;"><strong style="color:var(--text)">Leg-out:</strong> the base becomes a valid zone the instant it's immediately followed by a decisive or explosive candle. That breaking candle is the leg-out — the zone box is drawn from the base's start to the leg-out bar, using the base's high/low as its top/bottom.</p>
+    <p style="font-size:12px;color:var(--text2);">
+      <strong style="color:var(--text)">Valid base length: 1&ndash;6 consecutive indecisive candles.</strong> 7 or more resets the count entirely — no zone is drawn from an over-long base.
+    </p>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+      Note: the OTC course material describes indecisive candles as &le;50% (not 49%) and cautions against bases of 5+ candles as lower quality. The values above match your current live code (PxD Bot.txt) — treated as the standard going forward.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-num">03</span><span class="section-title">Zone Setup Checklist</span></div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">From the OTC zone-setup checklist (C1&ndash;C8). Run through all eight before treating a zone as tradeable.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;gap:12px;"><span class="badge b-other" style="min-width:88px;text-align:center;">C1 · Leg In</span><span style="font-size:12px;color:var(--text2);">The directional move into the base — establishes context for the zone. Not currently validated by code; visual/manual check only.</span></div>
+      <div style="display:flex;gap:12px;"><span class="badge b-other" style="min-width:88px;text-align:center;">C2 · Base</span><span style="font-size:12px;color:var(--text2);">1&ndash;6 consecutive indecisive candles — see Section 02.</span></div>
+      <div style="display:flex;gap:12px;"><span class="badge b-other" style="min-width:88px;text-align:center;">C3 · Leg Out</span><span style="font-size:12px;color:var(--text2);">Decisive or explosive candle breaking the base — see Section 02. Explosive leg-out with follow-through is the higher-quality version (Section 06).</span></div>
+      <div style="display:flex;gap:12px;"><span class="badge b-other" style="min-width:88px;text-align:center;">C4 · Level on Level</span><span style="font-size:12px;color:var(--text2);">Two zones stacked with a gap smaller than either zone (tagged "LoL"). Use the distal (outer) boundary as the wider version of the zone.</span></div>
+      <div style="display:flex;gap:12px;"><span class="badge b-other" style="min-width:88px;text-align:center;">C5 · Big Brother : Small Brother</span><span style="font-size:12px;color:var(--text2);">HTF zone (Daily/Weekly = Big Brother) provides context; LTF zone (4H = Small Brother) falling within or near it is the highest-grade confluence.</span></div>
+      <div style="display:flex;gap:12px;"><span class="badge b-other" style="min-width:88px;text-align:center;">C6 · Freshness</span><span style="font-size:12px;color:var(--text2);">Untouched since forming = Fresh. Reacted once = Touched (lower quality). Historical/invalidated = ignore entirely.</span></div>
+      <div style="display:flex;gap:12px;"><span class="badge b-other" style="min-width:88px;text-align:center;">C7 · Flip Level</span><span style="font-size:12px;color:var(--text2);">Tagged "F" — new demand forming in the area of an original supply zone, or vice versa. Not the same thing as freshness.</span></div>
+      <div style="display:flex;gap:12px;"><span class="badge b-other" style="min-width:88px;text-align:center;">C8 · Profit Check</span><span style="font-size:12px;color:var(--text2);">Clean profit margin to the next opposing zone before target — see Trade Management, Section 06.</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-num">04</span><span class="section-title">Zone Formation Types</span></div>
+    <div class="g4">
+      <div class="dash-stat"><div class="dash-stat-val" style="font-size:16px;">RBD</div><div class="dash-stat-lbl">Rally-Base-Drop</div><div class="dash-stat-sub">Supply zone</div></div>
+      <div class="dash-stat"><div class="dash-stat-val" style="font-size:16px;">RBR</div><div class="dash-stat-lbl">Rally-Base-Rally</div><div class="dash-stat-sub">Demand zone</div></div>
+      <div class="dash-stat"><div class="dash-stat-val" style="font-size:16px;">DBR</div><div class="dash-stat-lbl">Drop-Base-Rally</div><div class="dash-stat-sub">Demand zone</div></div>
+      <div class="dash-stat"><div class="dash-stat-val" style="font-size:16px;">DBD</div><div class="dash-stat-lbl">Drop-Base-Drop</div><div class="dash-stat-sub">Supply zone</div></div>
+    </div>
+    <p style="font-size:11px;color:var(--text3);margin-top:10px;">Each name is Leg In &ndash; Base &ndash; Leg Out in order. "O" tag = original zone (not caused by reacting to another zone to its left).</p>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-num">05</span><span class="section-title">Risk Tiers by Zone Quality</span></div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 0;color:var(--green);font-weight:600;">1.5%</td><td style="padding:8px 0;color:var(--text2);">Perfect Weekly Zones and Fundamentals</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 0;color:var(--amber);font-weight:600;">1%</td><td style="padding:8px 0;color:var(--text2);">Ugly zones, imperfect or missing fundamental aspect, price action entry</td></tr>
+      <tr><td style="padding:8px 0;color:var(--red);font-weight:600;">0.5%</td><td style="padding:8px 0;color:var(--text2);">Everything else — add-on or anticipatory entry</td></tr>
+    </table>
+    <p style="font-size:11px;color:var(--text3);margin-top:10px;">Also required at the Weekly Zone level: Fresh, Decisive leg-out. Add-ons: Originality, Monthly Coverage.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-header"><span class="section-num">06</span><span class="section-title">Daily Zone &amp; Trade Management</span></div>
+    <div class="g2" style="margin-bottom:14px;">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--text2);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;">Daily Zone Requirements</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.9;">
+          &bull; Within Weekly Location<br>
+          &bull; Explosive leg-out with follow-through<br>
+          &bull; Fresh, based on wider version (Level on Level)<br>
+          &bull; Base duration &mdash; 1&ndash;6 candles (Section 02)
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--text2);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;">Trade Management</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.9;">
+          &bull; Profit margin until next opposing zone<br>
+          &bull; Clean arrival without opposing zones (counter-trend trades)<br>
+          &bull; Level on top of Level rule (distal/wider version)<br>
+          &bull; Originality (add-on)
+        </div>
+      </div>
+    </div>
+    <div style="font-size:11px;font-weight:600;color:var(--text2);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;">Stop-to-Breakeven Progression</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 0;color:var(--text);width:160px;">Trend trades</td><td style="padding:6px 0;color:var(--text2);">SL to BE after 1:2, target 1:4</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 0;color:var(--text);">Counter-trend trades</td><td style="padding:6px 0;color:var(--text2);">SL to BE after 1:1, target 1:2&ndash;1:3</td></tr>
+      <tr><td style="padding:6px 0;color:var(--text);">Anticipatory trades</td><td style="padding:6px 0;color:var(--text2);">SL to BE after 1:1, target 1:4</td></tr>
+    </table>
+  </div>
+
+  <div class="section" style="border-color:var(--border2);">
+    <div class="section-header"><span class="section-num">&#9888;</span><span class="section-title">Known Discrepancies (Resolved)</span></div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+      <strong style="color:var(--text)">Candle cutoff:</strong> OTC source says indecisive &le;50%, decisive &gt;50%. Live code (PxD Bot.txt) uses &le;49% / 50&ndash;75% / &gt;75%. <strong style="color:var(--gold)">Resolved: code's version kept as current standard.</strong><br><br>
+      <strong style="color:var(--text)">Base duration:</strong> OTC checklist says "avoid 5+ indecisive candles." Live code allows up to 6 before invalidating. <strong style="color:var(--gold)">Resolved: code's cap (6) kept as current standard.</strong>
+    </div>
   </div>
 </div>
 </div>
