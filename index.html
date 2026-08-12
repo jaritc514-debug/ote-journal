@@ -311,7 +311,10 @@ tr:hover td{background:var(--bg3);}
     </div>
     <div class="g4 mb12">
       <div class="field"><label class="field-label">Pair</label><input type="text" id="f-pair" placeholder="e.g. GBPJPY"></div>
-      <div class="field"><label class="field-label">Execution TF</label><div class="pills"><input type="radio" name="exec-tf" class="pill-input" id="etf-4h" value="4H" onchange="updateContextLabels()"><label class="pill-label" for="etf-4h">4H</label><input type="radio" name="exec-tf" class="pill-input" id="etf-15m" value="15m" onchange="updateContextLabels()"><label class="pill-label" for="etf-15m">15m</label></div></div>
+      <div class="field"><label class="field-label">Execution TF</label>
+        <div class="pills" id="exec-tf-ote"><input type="radio" name="exec-tf" class="pill-input" id="etf-4h" value="4H" onchange="updateContextLabels()"><label class="pill-label" for="etf-4h">4H</label><input type="radio" name="exec-tf" class="pill-input" id="etf-15m" value="15m" onchange="updateContextLabels()"><label class="pill-label" for="etf-15m">15m</label></div>
+        <div class="pills" id="exec-tf-sd" style="display:none"><input type="radio" name="sd-exec-tf" class="pill-input" id="setf-w" value="Weekly" onchange="updateContextLabels()"><label class="pill-label" for="setf-w">Weekly</label><input type="radio" name="sd-exec-tf" class="pill-input" id="setf-d" value="Daily" onchange="updateContextLabels()"><label class="pill-label" for="setf-d">Daily</label><input type="radio" name="sd-exec-tf" class="pill-input" id="setf-4h" value="4H" onchange="updateContextLabels()"><label class="pill-label" for="setf-4h">4H</label></div>
+      </div>
       <div class="field"><label class="field-label">Setup</label><div class="pills"><input type="radio" name="setup-type" class="pill-input" id="st-ote" value="OTE x PxD" checked onchange="updateSetupVisibility()"><label class="pill-label" for="st-ote">OTE x PxD</label><input type="radio" name="setup-type" class="pill-input" id="st-sd" value="Supply and Demand" onchange="updateSetupVisibility()"><label class="pill-label" for="st-sd">Supply and Demand</label></div></div>
       <div class="field"><label class="field-label">Account(s)</label><div id="acc-checkboxes" class="pills" style="margin-top:6px"></div></div>
     </div>
@@ -730,14 +733,15 @@ function renderAccCheckboxes(){
 
 function updateSetupVisibility(){
   const isSD=getR('setup-type')==='Supply and Demand';
-  const sdOnly=['section-sd-zone'];
-  const oteOnly=['section-leg-quality','section-fvg','section-checklist-score'];
+  const sdOnly=['section-sd-zone','exec-tf-sd'];
+  const oteOnly=['section-leg-quality','section-fvg','section-checklist-score','exec-tf-ote'];
   sdOnly.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=isSD?'':'none';});
   oteOnly.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=isSD?'none':'';});
+  updateContextLabels();
 }
 
 function updateContextLabels(tf){
-  const is15m=(tf||getR('exec-tf'))==='15m';
+  const is15m=(tf||getR('exec-tf')||getR('sd-exec-tf'))==='15m';
   const s=is15m?'4H':'Daily';
   const el=id=>document.getElementById(id);
   if(el('s02-title'))el('s02-title').textContent=s+' Context';
@@ -775,7 +779,7 @@ function getSelAccounts(){return accounts.filter(a=>document.getElementById('acc
 
 function buildTrade(){
   const score=parseInt(document.getElementById('score-num').textContent)||0;
-  return{entryDate:document.getElementById('f-entry-date').value,entryTime:document.getElementById('f-entry-time').value,closeDate:document.getElementById('f-close-date').value,closeTime:document.getElementById('f-close-time').value,pair:document.getElementById('f-pair').value,execTf:getR('exec-tf'),setup:getR('setup-type'),accounts:getSelAccounts(),direction:getR('direction'),grade:getR('grade'),quality:getR('quality'),entry:document.getElementById('f-entry').value,sl:document.getElementById('f-sl').value,tp:document.getElementById('f-tp').value,size:document.getElementById('f-size').value,rr:document.getElementById('f-rr').value,resultR:document.getElementById('f-result-r').value,pnl:document.getElementById('f-pnl').value,outcome:getR('outcome'),dailyBias:getR('daily-bias'),fibZone:getR('fib-zone'),zoneValid:getR('zone-valid'),cotAlign:getR('cot-align'),cotRegime:getR('cot-regime'),skipReason:document.getElementById('f-skip').value,swingHigh:document.getElementById('f-swh').value,swingLow:document.getElementById('f-swl').value,zoneFormation:getR('zone-formation'),sdLegIn:getR('sd-legin'),sdBaseCount:document.getElementById('f-base-count').value,sdLegOut:getR('sd-legout'),sdLevelOnLevel:getR('sd-lol'),sdBigSmallBrother:getR('sd-bbsb'),sdFreshness:getR('sd-fresh'),sdFlipLevel:getR('sd-flip'),sdProfitCheck:getR('sd-profit'),sdRiskTier:getR('sd-risktier'),legDir:getR('leg-dir'),tradeType:getR('trade-type'),liqSweep:getR('liq-sweep'),legQuals:getChks(['lq-mss','lq-mom','lq-pull','lq-anc','lq-dom']),fvgFound:getR('fvg-found'),fvgLoc:getR('fvg-loc'),fvgSize:getR('fvg-size'),fvg786:getR('fvg-786'),fvgNotes:document.getElementById('f-fvg-notes').value,chkHtf:getR('chk-htf'),chkLiq:getR('chk-liq'),chkBos:getR('chk-bos'),chkImb:getR('chk-imb'),score,followed:getR('followed'),emoBefore:getR('emo-before'),emoAfter:getR('emo-after'),execQ:getR('exec-q'),mistakes:getChks(['m1','m2','m3','m4','m5','m6','m7','m8','m9','m10']),lesson:document.getElementById('f-lesson').value,notes:document.getElementById('f-notes').value,imgDaily:'',img4h:''};
+  return{entryDate:document.getElementById('f-entry-date').value,entryTime:document.getElementById('f-entry-time').value,closeDate:document.getElementById('f-close-date').value,closeTime:document.getElementById('f-close-time').value,pair:document.getElementById('f-pair').value,execTf:getR('exec-tf')||getR('sd-exec-tf'),setup:getR('setup-type'),accounts:getSelAccounts(),direction:getR('direction'),grade:getR('grade'),quality:getR('quality'),entry:document.getElementById('f-entry').value,sl:document.getElementById('f-sl').value,tp:document.getElementById('f-tp').value,size:document.getElementById('f-size').value,rr:document.getElementById('f-rr').value,resultR:document.getElementById('f-result-r').value,pnl:document.getElementById('f-pnl').value,outcome:getR('outcome'),dailyBias:getR('daily-bias'),fibZone:getR('fib-zone'),zoneValid:getR('zone-valid'),cotAlign:getR('cot-align'),cotRegime:getR('cot-regime'),skipReason:document.getElementById('f-skip').value,swingHigh:document.getElementById('f-swh').value,swingLow:document.getElementById('f-swl').value,zoneFormation:getR('zone-formation'),sdLegIn:getR('sd-legin'),sdBaseCount:document.getElementById('f-base-count').value,sdLegOut:getR('sd-legout'),sdLevelOnLevel:getR('sd-lol'),sdBigSmallBrother:getR('sd-bbsb'),sdFreshness:getR('sd-fresh'),sdFlipLevel:getR('sd-flip'),sdProfitCheck:getR('sd-profit'),sdRiskTier:getR('sd-risktier'),legDir:getR('leg-dir'),tradeType:getR('trade-type'),liqSweep:getR('liq-sweep'),legQuals:getChks(['lq-mss','lq-mom','lq-pull','lq-anc','lq-dom']),fvgFound:getR('fvg-found'),fvgLoc:getR('fvg-loc'),fvgSize:getR('fvg-size'),fvg786:getR('fvg-786'),fvgNotes:document.getElementById('f-fvg-notes').value,chkHtf:getR('chk-htf'),chkLiq:getR('chk-liq'),chkBos:getR('chk-bos'),chkImb:getR('chk-imb'),score,followed:getR('followed'),emoBefore:getR('emo-before'),emoAfter:getR('emo-after'),execQ:getR('exec-q'),mistakes:getChks(['m1','m2','m3','m4','m5','m6','m7','m8','m9','m10']),lesson:document.getElementById('f-lesson').value,notes:document.getElementById('f-notes').value,imgDaily:'',img4h:''};
 }
 
 async function saveTrade(){
@@ -854,7 +858,7 @@ function editTrade(rowNum){
   const accs=Array.isArray(t.accounts)?t.accounts:(t.accounts?String(t.accounts).split(','):[]);
   accounts.forEach(a=>{const el=document.getElementById('acc-chk-'+a.id);if(el)el.checked=accs.map(s=>s.trim()).includes(a.id);});
   function sr(n,v){if(!v)return;const el=document.querySelector(`input[name="${n}"][value="${v}"]`);if(el)el.checked=true;}
-  sr('exec-tf',t.execTf||t.tf||'');
+  sr('exec-tf',t.execTf||t.tf||'');sr('sd-exec-tf',t.execTf||t.tf||'');
   updateContextLabels(t.execTf||t.tf||'');
   sr('direction',t.direction);sr('grade',t.grade);sr('quality',t.quality);sr('outcome',t.outcome);sr('daily-bias',t.dailyBias);sr('fib-zone',t.fibZone);sr('fib-zone-precision',t.fibZonePrecision);sr('zone-valid',t.zoneValid);sr('cot-align',t.cotAlign);sr('cot-regime',t.cotRegime);sr('zone-formation',t.zoneFormation);sr('sd-legin',t.sdLegIn);sr('sd-legout',t.sdLegOut);sr('sd-lol',t.sdLevelOnLevel);sr('sd-bbsb',t.sdBigSmallBrother);sr('sd-fresh',t.sdFreshness);sr('sd-flip',t.sdFlipLevel);sr('sd-profit',t.sdProfitCheck);sr('sd-risktier',t.sdRiskTier);sr('leg-dir',t.legDir);sr('leg-quality',t.legQuality);sr('fvg-found',t.fvgFound);sr('fvg-loc',t.fvgLoc);sr('fvg-size',t.fvgSize);sr('fvg-status',t.fvgStatus);sr('chk-htf',t.chkHtf);sr('chk-liq',t.chkLiq);sr('chk-bos',t.chkBos);sr('chk-705',t.chk705);sr('chk-liqgrab',t.chkLiqGrab||'N/A');sr('followed',t.followed);sr('emo-before',t.emoBefore);sr('emo-after',t.emoAfter);sr('exec-q',t.execQ);
   const lqM={'lq-mss':'Clean MSS confirmed','lq-mom':'Strong momentum candles','lq-pull':'Minimal mid-leg pullback','lq-anc':'Clear anchor high/low','lq-dom':'Dominant leg','lq-liq':'Liquidity sweep before leg'};
