@@ -170,6 +170,8 @@ tr:hover td{background:var(--bg3);}
 .loading-spinner{width:36px;height:36px;border:3px solid rgba(201,168,76,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite;}
 .loading-txt{font-size:13px;color:var(--text2);}
 .dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.dash-setup-filter-btn{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;padding:6px 16px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;transition:all 0.15s;}
+.dash-setup-filter-btn.active{background:var(--gold);color:#000;border-color:var(--gold);}
 .dash-stat{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:18px;}
 .dash-stat-val{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold);line-height:1;}
 .dash-stat-lbl{font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-top:5px;}
@@ -294,6 +296,11 @@ tr:hover td{background:var(--bg3);}
 <div class="main">
 <!-- DASHBOARD -->
 <div id="page-dashboard" class="page active">
+  <div class="dash-filter-bar" style="display:flex;gap:8px;margin-bottom:14px;">
+    <button class="dash-setup-filter-btn active" onclick="setDashSetupFilter('all',this)">Combined</button>
+    <button class="dash-setup-filter-btn" onclick="setDashSetupFilter('ote',this)">OTE x PxD</button>
+    <button class="dash-setup-filter-btn" onclick="setDashSetupFilter('sd',this)">Supply and Demand</button>
+  </div>
   <div class="dash-stats">
     <div class="dash-stat"><div class="dash-stat-val" id="d-winrate">--</div><div class="dash-stat-lbl">Win Rate</div><div class="dash-stat-sub" id="d-wl">--</div></div>
     <div class="dash-stat"><div class="dash-stat-val" id="d-pf">--</div><div class="dash-stat-lbl">Profit Factor</div><div class="dash-stat-sub" id="d-exp">Expectancy: --</div></div>
@@ -1007,8 +1014,20 @@ function backFromDetail(){
   renderLog();
 }
 
+let dashSetupFilter='all';
+function setDashSetupFilter(f,btn){
+  dashSetupFilter=f;
+  document.querySelectorAll('.dash-setup-filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDashboard();
+}
 function renderDashboard(){
-  const live=trades.filter(t=>t.quality==='Live Trade');
+  const live=trades.filter(t=>{
+    if(t.quality!=='Live Trade')return false;
+    if(dashSetupFilter==='ote'&&t.setup!=='OTE x PxD')return false;
+    if(dashSetupFilter==='sd'&&t.setup!=='Supply and Demand')return false;
+    return true;
+  });
   const wins=live.filter(t=>t.outcome==='Win').length,losses=live.filter(t=>t.outcome==='Loss').length;
   const wr=live.length?wins/live.length:0;
   const rs=live.map(t=>parseFloat(t.resultR)).filter(v=>!isNaN(v));
