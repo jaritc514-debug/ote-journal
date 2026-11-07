@@ -1,3 +1,7 @@
 name = "ote-journal"
 main = "worker.js"
 compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "IMGS"
+id = "f95f9281ca2645768db2aea065f9f5c8"
