@@ -948,6 +948,13 @@ function calcSize() {
     document.getElementById('risk-warn-txt').textContent = ` ${riskPct}% risk is above the standard 1-2% rule. FTMO limits drawdown — confirm this fits your plan.`;
   } else { riskWarn.style.display = 'none'; }
 
+  // BTCUSD: MT5 Specification says Maximal volume 5. A tight stop can need more than that, and MT5 rejects the order.
+  const BTC_MAX_LOTS = 5;
+  if (inst === 'btc' && lots > BTC_MAX_LOTS) {
+    riskWarn.style.display = 'block';
+    document.getElementById('risk-warn-txt').textContent = ` ${lots.toFixed(2)} lots is above BTCUSD's maximum order size of ${BTC_MAX_LOTS}. MT5 will reject it. Widen the stop or lower the risk %.`;
+  }
+
   const lines = [
     `Risk amount: ${riskPct}% of $${balance.toLocaleString()} = $${riskAmt.toFixed(2)}`,
     `SL distance: |${entryVal} − ${slVal}| = ${slDistance.toFixed(inst==='indices'?1:inst==='btc'?2:5)} = ${slPips.toFixed(1)} ${pipLblStr}`,
